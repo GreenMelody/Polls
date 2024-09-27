@@ -108,6 +108,14 @@
             border-top: 1px solid #ddd;
             margin: 8px 0;
         }
+        .time-info {
+            color: #6c757d; /* 연한 회색 */
+            text-align: left; /* 좌측 정렬 */
+            margin: 5px 20px; /* 여백 추가 */
+        }
+        .time-info p {
+            margin-bottom: 2px;
+        }
     </style>
 </head>
 <body>
@@ -135,6 +143,10 @@
                                 </div>
                             </form>
                         {% endif %}
+                    </div>
+                    <div class="time-info">
+                        <p><strong>Start Time:</strong> {{ start_time }}</p>
+                        <p><strong>End &nbsp;Time:</strong> {{ end_time }}</p>
                     </div>
                     {% if not is_expired %}
                         <button type="submit" form="vote-form" class="btn btn-custom m-3">Vote</button>

@@ -1,5 +1,4 @@
-# app.py
-from flask import Flask, request, render_template, redirect, url_for, jsonify, flash
+from flask import Flask, request, render_template, url_for, jsonify
 import sqlite3
 import hashlib
 import uuid
@@ -62,18 +61,22 @@ def create_poll():
 def view_poll(poll_id):
     conn = sqlite3.connect('polls.db')
     cursor = conn.cursor()
-    cursor.execute('SELECT title, options, end_date FROM polls WHERE id = ?', (poll_id,))
+    cursor.execute('SELECT title, options, end_date, created_at FROM polls WHERE id = ?', (poll_id,))
     poll = cursor.fetchone()
     conn.close()
 
     if not poll:
         return jsonify({'success': False, 'message': 'Poll not found.'})
 
-    title, options, end_date = poll
+    title, options, end_date, created_at = poll
     options = eval(options)
 
+    # 날짜 형식을 통일하고 초를 맞추는 부분
+    formatted_start_time = datetime.fromisoformat(created_at).strftime('%Y-%m-%d %H:%M:%S')
+    formatted_end_time = datetime.fromisoformat(end_date).strftime('%Y-%m-%d %H:%M:00')
+
     if request.method == 'POST':
-        user_id = request.form.get('user_id')  # Assuming fingerprintJs ID is sent
+        user_id = request.form.get('user_id')
         option_index = int(request.form.get('option'))
 
         conn = sqlite3.connect('poll-result.db')
@@ -94,7 +97,15 @@ def view_poll(poll_id):
     current_time = datetime.now()
     is_expired = current_time > datetime.fromisoformat(end_date)
 
-    return render_template('poll.html', title=title, options=options, poll_id=poll_id, is_expired=is_expired)
+    return render_template(
+        'poll.html', 
+        title=title, 
+        options=options, 
+        poll_id=poll_id, 
+        is_expired=is_expired, 
+        start_time=formatted_start_time, 
+        end_time=formatted_end_time
+    )
 
 @app.route('/preview/<poll_id>', methods=['GET'])
 def preview_poll(poll_id):
