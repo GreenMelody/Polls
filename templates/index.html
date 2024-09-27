@@ -10,14 +10,13 @@
 <body>
     <div class="container mt-5">
         <h1>Create a Poll</h1>
-        <form id="poll-form" action="/create_poll" method="post">
+        <form id="poll-form">
             <div class="mb-3">
                 <label for="title" class="form-label">Poll Title</label>
                 <input type="text" class="form-control" id="title" name="title" required>
             </div>
             <div id="options-container" class="mb-3">
                 <label class="form-label">Options</label>
-                <!-- 기본적으로 두 개의 빈 옵션을 표시 -->
                 <div class="input-group mb-2">
                     <input type="text" class="form-control" name="options[]" placeholder="Option 1" required>
                 </div>
@@ -37,16 +36,8 @@
             <button type="submit" class="btn btn-primary">Create Poll</button>
         </form>
 
-        <!-- Display flash messages -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                <div class="mt-4">
-                    {% for category, message in messages %}
-                        <div class="alert alert-{{ category }}">{{ message }}</div>
-                    {% endfor %}
-                </div>
-            {% endif %}
-        {% endwith %}
+        <!-- Display messages -->
+        <div id="message-container" class="mt-4"></div>
     </div>
 
     <script>
@@ -83,8 +74,11 @@
             optionsContainer.appendChild(newOption);
         });
 
-        // Validate form before submission
+        // Validate form and send data via AJAX
         document.getElementById('poll-form').addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent form from submitting normally
+
+            // Input validation
             const title = document.getElementById('title').value.trim();
             const options = Array.from(document.querySelectorAll('input[name="options[]"]'))
                 .map(option => option.value.trim())
@@ -93,25 +87,45 @@
 
             // Validate title
             if (!title) {
-                alert('Please provide a title for the poll.');
-                event.preventDefault();
+                displayMessage('Please provide a title for the poll.', 'danger');
                 return;
             }
 
             // Validate options
             if (options.length < 2) {
-                alert('Please provide at least two options for the poll.');
-                event.preventDefault();
+                displayMessage('Please provide at least two options for the poll.', 'danger');
                 return;
             }
 
             // Validate end date
             if (endDate <= new Date()) {
-                alert('End date must be in the future.');
-                event.preventDefault();
+                displayMessage('End date must be in the future.', 'danger');
                 return;
             }
+
+            // Prepare data for AJAX
+            const formData = new FormData(this);
+
+            // Send data to server via AJAX
+            fetch('/create_poll', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                displayMessage(data.message, data.success ? 'success' : 'danger');
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                displayMessage('An error occurred while creating the poll.', 'danger');
+            });
         });
+
+        // Function to display messages
+        function displayMessage(message, type) {
+            const messageContainer = document.getElementById('message-container');
+            messageContainer.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+        }
     </script>
 </body>
 </html>

@@ -1,3 +1,4 @@
+# app.py
 from flask import Flask, request, render_template, redirect, url_for, jsonify, flash
 import sqlite3
 import hashlib
@@ -26,6 +27,24 @@ def create_poll():
     password = request.form.get('password')
     end_date = request.form.get('end_date')
 
+    # Validate input values
+    if not title:
+        flash('Please provide a title for the poll.', 'danger')
+        return jsonify({'success': False, 'message': 'Please provide a title for the poll.'})
+
+    if len([option for option in options if option.strip()]) < 2:
+        flash('Please provide at least two options for the poll.', 'danger')
+        return jsonify({'success': False, 'message': 'Please provide at least two options for the poll.'})
+
+    try:
+        end_date_dt = datetime.fromisoformat(end_date)
+        if end_date_dt <= datetime.now():
+            flash('End date must be in the future.', 'danger')
+            return jsonify({'success': False, 'message': 'End date must be in the future.'})
+    except ValueError:
+        flash('Invalid date format.', 'danger')
+        return jsonify({'success': False, 'message': 'Invalid date format.'})
+
     poll_id = generate_poll_id()
     hashed_password = hash_password(password)
 
@@ -42,7 +61,7 @@ def create_poll():
     # Return poll link
     poll_link = url_for('view_poll', poll_id=poll_id, _external=True)
     flash(f'Poll created! Share this link: {poll_link}', 'success')
-    return redirect(url_for('index'))
+    return jsonify({'success': True, 'message': f'Poll created! Share this link: {poll_link}'})
 
 @app.route('/poll/<poll_id>', methods=['GET', 'POST'])
 def view_poll(poll_id):
