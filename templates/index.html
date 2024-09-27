@@ -8,31 +8,31 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
-            background-color: #f4f7fa; /* 전체 배경색을 부드러운 톤으로 변경 */
-            color: #333; /* 텍스트 색상 조정 */
+            background-color: #f4f7fa; 
+            color: #333; 
         }
         .container {
-            background-color: #ffffff; /* 메인 컨테이너 배경을 하얀색으로 */
-            border-radius: 10px; /* 둥근 모서리 추가 */
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* 부드러운 그림자 효과 */
-            padding: 30px; /* 내부 여백 추가 */
+            background-color: #ffffff; 
+            border-radius: 10px; 
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); 
+            padding: 30px; 
             margin-top: 50px;
-            width: 50%; /* 폭을 화면의 50%로 설정 */
-            max-width: 600px; /* 최대 너비를 설정하여 너무 넓어지지 않도록 함 */
+            width: 50%; 
+            max-width: 600px; 
             margin-left: auto;
-            margin-right: auto; /* 가운데 정렬 */
+            margin-right: auto; 
         }
         .form-label {
-            font-weight: 600; /* 레이블의 글자 굵기를 강조 */
-            color: #4a4a4a; /* 레이블 색상 변경 */
+            font-weight: 600; 
+            color: #4a4a4a; 
         }
         .btn-primary {
-            background-color: #4a90e2; /* 버튼 색상 부드럽게 */
+            background-color: #4a90e2; 
             border: none;
             transition: background-color 0.3s;
         }
         .btn-primary:hover {
-            background-color: #357ABD; /* 호버 시 색상 변화 */
+            background-color: #357ABD; 
         }
         .btn-secondary {
             background-color: #6c757d;
@@ -43,13 +43,21 @@
             background-color: #5a6268;
         }
         .input-group .form-control {
-            border: 1px solid #ccc; /* 인풋 테두리 색상 변경 */
+            border: 1px solid #ccc; 
         }
         #message-container {
-            background-color: #e3f7e9; /* 메시지 배경을 밝은 초록색으로 */
+            background-color: #e3f7e9; 
             padding: 15px;
             border-radius: 5px;
             border: 1px solid #c3e6cb;
+            margin-top: 20px;
+        }
+        #iframe-container {
+            display: none;
+            background-color: #f9f9f9;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
             margin-top: 20px;
         }
         hr {
@@ -93,14 +101,18 @@
             <button type="submit" class="btn btn-primary w-100">Create Poll</button>
         </form>
 
-        <!-- 구분선 추가 -->
         <hr>
 
-        <!-- Display messages and copy link feature -->
         <div id="message-container" style="display: none;"></div>
+
+        <!-- Iframe Container -->
+        <div id="iframe-container">
+            <p>아래 코드를 게시판의 HTML 탭에 붙여넣으세요</p>
+            <button class="btn btn-outline-secondary btn-sm mb-2" id="copy-iframe-btn">Copy text</button>
+            <textarea id="iframe-code" class="form-control" rows="3" readonly></textarea>
+        </div>
     </div>
 
-    <!-- Toast Container -->
     <div class="toast-container position-fixed bottom-0 end-0 p-3">
         <div id="copyToast" class="toast align-items-center text-bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
             <div class="d-flex">
@@ -114,31 +126,22 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Function to set the default date to 3 days from now at 23:59:59 considering local time
         function setDefaultEndDate() {
             const endDateInput = document.getElementById('end_date');
             const currentDate = new Date();
-
-            // Set the date to 3 days later
             currentDate.setDate(currentDate.getDate() + 3);
             currentDate.setHours(23, 59, 59);
-
-            // Convert to local datetime format YYYY-MM-DDTHH:MM
             const year = currentDate.getFullYear();
             const month = String(currentDate.getMonth() + 1).padStart(2, '0');
             const day = String(currentDate.getDate()).padStart(2, '0');
             const hours = String(currentDate.getHours()).padStart(2, '0');
             const minutes = String(currentDate.getMinutes()).padStart(2, '0');
-
-            // Set formatted date to the input
             const formattedDate = `${year}-${month}-${day}T${hours}:${minutes}`;
             endDateInput.value = formattedDate;
         }
 
-        // Call the function when the page loads
         window.onload = setDefaultEndDate;
 
-        // Add new option input field dynamically
         document.getElementById('add-option-btn').addEventListener('click', function() {
             const optionsContainer = document.getElementById('options-container');
             const newOption = document.createElement('div');
@@ -147,39 +150,31 @@
             optionsContainer.appendChild(newOption);
         });
 
-        // Validate form and send data via AJAX
         document.getElementById('poll-form').addEventListener('submit', function(event) {
-            event.preventDefault(); // Prevent form from submitting normally
-
-            // Input validation
+            event.preventDefault(); 
             const title = document.getElementById('title').value.trim();
             const options = Array.from(document.querySelectorAll('input[name="options[]"]'))
                 .map(option => option.value.trim())
                 .filter(option => option !== '');
             const endDate = new Date(document.getElementById('end_date').value);
 
-            // Validate title
             if (!title) {
                 displayMessage('Please provide a title for the poll.', 'danger');
                 return;
             }
 
-            // Validate options
             if (options.length < 2) {
                 displayMessage('Please provide at least two options for the poll.', 'danger');
                 return;
             }
 
-            // Validate end date
             if (endDate <= new Date()) {
                 displayMessage('End date must be in the future.', 'danger');
                 return;
             }
 
-            // Prepare data for AJAX
             const formData = new FormData(this);
 
-            // Send data to server via AJAX
             fetch('/create_poll', {
                 method: 'POST',
                 body: formData
@@ -187,7 +182,8 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    displayLink(data.message); // Show the link and copy button
+                    displayLink(data.message);
+                    displayIframeCode(data.message); // Show iframe code with the generated link
                 } else {
                     displayMessage(data.message, 'danger');
                 }
@@ -198,14 +194,12 @@
             });
         });
 
-        // Function to display messages
         function displayMessage(message, type) {
             const messageContainer = document.getElementById('message-container');
             messageContainer.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
-            messageContainer.style.display = 'block'; // Show the container
+            messageContainer.style.display = 'block';
         }
 
-        // Function to display link and copy functionality
         function displayLink(link) {
             const messageContainer = document.getElementById('message-container');
             messageContainer.innerHTML = `
@@ -213,19 +207,32 @@
                 <button class="btn btn-outline-secondary btn-sm" id="copy-link-btn">Copy Link</button>
                 <input type="text" class="form-control mt-2" id="poll-link" value="${link}" readonly>
             `;
-            messageContainer.style.display = 'block'; // Show the container
+            messageContainer.style.display = 'block';
 
-            // Copy link to clipboard
             document.getElementById('copy-link-btn').addEventListener('click', function() {
                 navigator.clipboard.writeText(link).then(() => {
-                    showToast(); // Show toast notification
+                    showToast();
                 }).catch(err => {
                     console.error('Failed to copy: ', err);
                 });
             });
         }
 
-        // Function to show toast notification
+        function displayIframeCode(link) {
+            const iframeContainer = document.getElementById('iframe-container');
+            const iframeCode = `<iframe src="${link}" width="500" height="600"></iframe>`;
+            document.getElementById('iframe-code').value = iframeCode;
+            iframeContainer.style.display = 'block';
+
+            document.getElementById('copy-iframe-btn').addEventListener('click', function() {
+                navigator.clipboard.writeText(iframeCode).then(() => {
+                    showToast();
+                }).catch(err => {
+                    console.error('Failed to copy: ', err);
+                });
+            });
+        }
+
         function showToast() {
             const toastElement = document.getElementById('copyToast');
             const toast = new bootstrap.Toast(toastElement);
