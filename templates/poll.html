@@ -12,9 +12,9 @@
             border: 1px solid #ddd;
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            padding: 20px;
+            padding: 0;
             margin-top: 20px;
-            position: relative; /* 추가: toast를 card 안에 배치하기 위해 필요 */
+            position: relative;
         }
         .card-header-custom {
             background-color: #e9ecef;
@@ -26,6 +26,12 @@
             border-top-left-radius: 8px;
             border-top-right-radius: 8px;
         }
+        .card-body-custom {
+            background-color: #ffffff;
+            padding: 20px;
+            border-bottom-left-radius: 8px;
+            border-bottom-right-radius: 8px;
+        }
         .btn-custom {
             background-color: #4a90e2;
             border: none;
@@ -36,10 +42,10 @@
             background-color: #357ABD;
         }
         .toast-container {
-            position: absolute; /* card 내부에 위치시키기 위해 변경 */
-            bottom: 10px; /* 카드 하단에 위치 */
+            position: absolute;
+            bottom: 20px;
             left: 50%;
-            transform: translateX(-50%); /* 중앙 정렬 */
+            transform: translateX(-50%);
             z-index: 1055;
         }
     </style>
@@ -50,10 +56,9 @@
             <div class="col-md-8 col-lg-6">
                 <div class="card-custom">
                     <div class="card-header-custom">{{ title }}</div>
-                    <div class="card-body">
+                    <div class="card-body-custom">
                         {% if is_expired %}
                             <h5 class="text-center">This poll has ended. Here are the results:</h5>
-                            <button id="previewButton" class="btn btn-custom mb-3">Preview Results</button>
                             <div id="resultsContainer" class="mt-3"></div>
                         {% else %}
                             <form id="vote-form">
@@ -68,22 +73,24 @@
                                         </div>
                                     {% endfor %}
                                 </div>
-                                <button type="submit" class="btn btn-custom mb-3">Vote</button>
                             </form>
-                            <button id="previewButton" class="btn btn-custom mt-3">Preview Results</button>
-                            <div id="resultsContainer" class="mt-3"></div>
                         {% endif %}
-                        
-                        <!-- Toast Container (카드 하단) -->
-                        <div class="toast-container">
-                            <div id="voteToast" class="toast align-items-center text-bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
-                                <div class="d-flex">
-                                    <div class="toast-body" id="toast-message">
-                                        <!-- Message will be dynamically updated -->
-                                    </div>
-                                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-                                </div>
+                    </div>
+                    {% if not is_expired %}
+                        <button type="submit" form="vote-form" class="btn btn-custom m-3">Vote</button>
+                    {% endif %}
+                    <button id="previewButton" class="btn btn-custom m-3">Preview Results</button>
+                    <div id="resultsContainer" class="mt-3"></div> <!-- resultsContainer를 card-body 밖으로 이동 -->
+                </div>
+                
+                <!-- Toast Container (카드 내부 하단) -->
+                <div class="toast-container">
+                    <div id="voteToast" class="toast align-items-center text-bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                        <div class="d-flex">
+                            <div class="toast-body" id="toast-message">
+                                <!-- Message will be dynamically updated -->
                             </div>
+                            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
                         </div>
                     </div>
                 </div>
@@ -95,18 +102,31 @@
     <script>
         document.getElementById('previewButton').addEventListener('click', function() {
             const pollId = "{{ poll_id }}";
+            const resultsContainer = document.getElementById('resultsContainer'); // resultsContainer를 여기서 확실히 선택
+
+            if (!resultsContainer) {
+                console.error('Error: resultsContainer element not found.');
+                return;
+            }
+
             fetch(`/preview/${pollId}`)
                 .then(response => response.json())
                 .then(data => {
-                    const resultsContainer = document.getElementById('resultsContainer');
-                    resultsContainer.innerHTML = '';
-                    data.forEach(result => {
-                        const resultItem = document.createElement('p');
-                        resultItem.textContent = `Option ${result.option_index + 1}: ${result.vote_count} votes`;
-                        resultsContainer.appendChild(resultItem);
-                    });
+                    resultsContainer.innerHTML = ''; // Clear previous results
+                    if (data.length === 0) {
+                        resultsContainer.innerHTML = '<p>No votes have been cast yet.</p>';
+                    } else {
+                        data.forEach(result => {
+                            const resultItem = document.createElement('p');
+                            resultItem.textContent = `Option ${result.option_index + 1}: ${result.vote_count} votes`;
+                            resultsContainer.appendChild(resultItem);
+                        });
+                    }
                 })
-                .catch(error => console.error('Error:', error));
+                .catch(error => {
+                    console.error('Error:', error);
+                    showToast('An error occurred while fetching results.', 'danger');
+                });
         });
 
         // AJAX를 이용한 투표 전송
