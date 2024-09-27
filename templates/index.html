@@ -54,14 +54,14 @@
         }
         #iframe-container {
             display: none;
-            background-color: #f9f9f9;
+            background-color: #e3f7e9;
             padding: 15px;
             border: 1px solid #ddd;
             border-radius: 5px;
             margin-top: 20px;
         }
         hr {
-            border: 1px solid #ddd; 
+            border: 1px solid #9c5b5b; 
             margin-top: 20px;
         }
         .toast-container {
@@ -103,14 +103,15 @@
 
         <hr>
 
-        <div id="message-container" style="display: none;"></div>
-
         <!-- Iframe Container -->
         <div id="iframe-container">
-            <p>아래 코드를 게시판의 HTML 탭에 붙여넣으세요</p>
+            <sapn>아래 코드를 게시판의 HTML 탭에 붙여넣으세요</span>
             <button class="btn btn-outline-secondary btn-sm mb-2" id="copy-iframe-btn">Copy text</button>
             <textarea id="iframe-code" class="form-control" rows="3" readonly></textarea>
         </div>
+
+        <div id="message-container" style="display: none;"></div>
+
     </div>
 
     <div class="toast-container position-fixed bottom-0 end-0 p-3">
@@ -203,7 +204,7 @@
         function displayLink(link) {
             const messageContainer = document.getElementById('message-container');
             messageContainer.innerHTML = `
-                <span>Poll created! Share this link.</span> 
+                <span>투표 링크가 생성되었습니다. 링크를 공유해 보세요.</span> 
                 <button class="btn btn-outline-secondary btn-sm" id="copy-link-btn">Copy Link</button>
                 <input type="text" class="form-control mt-2" id="poll-link" value="${link}" readonly>
             `;
