@@ -98,6 +98,19 @@ def view_poll(poll_id):
 
 @app.route('/preview/<poll_id>', methods=['GET'])
 def preview_poll(poll_id):
+    # Fetch options from the poll
+    conn = sqlite3.connect('polls.db')
+    cursor = conn.cursor()
+    cursor.execute('SELECT options FROM polls WHERE id = ?', (poll_id,))
+    poll = cursor.fetchone()
+    conn.close()
+
+    if not poll:
+        return jsonify({'success': False, 'message': 'Poll not found.'})
+
+    options = eval(poll[0])
+
+    # Fetch votes from the poll results
     conn = sqlite3.connect('poll-result.db')
     cursor = conn.cursor()
     cursor.execute('''
@@ -106,10 +119,16 @@ def preview_poll(poll_id):
         WHERE poll_id = ? 
         GROUP BY option_index
     ''', (poll_id,))
-    results = cursor.fetchall()
+    vote_results = cursor.fetchall()
     conn.close()
 
-    return jsonify([{'option_index': row[0], 'vote_count': row[1]} for row in results])
+    # Combine options with votes
+    results = [{'option_index': i, 'option_text': options[i], 'vote_count': 0} for i in range(len(options))]
+    for vote in vote_results:
+        results[vote[0]]['vote_count'] = vote[1]
+
+    return jsonify(results)
+
 
 if __name__ == '__main__':
     app.run(debug=True)
