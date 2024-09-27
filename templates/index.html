@@ -23,38 +23,42 @@
 </head>
 <body>
     <div class="container mt-5">
-        <h1>Create a Poll</h1>
-        <form id="poll-form">
-            <div class="mb-3">
-                <label for="title" class="form-label">Poll Title</label>
-                <input type="text" class="form-control" id="title" name="title" required>
-            </div>
-            <div id="options-container" class="mb-3">
-                <label class="form-label">Options</label>
-                <div class="input-group mb-2">
-                    <input type="text" class="form-control" name="options[]" placeholder="Option 1" required>
-                </div>
-                <div class="input-group mb-2">
-                    <input type="text" class="form-control" name="options[]" placeholder="Option 2" required>
-                </div>
-            </div>
-            <button type="button" class="btn btn-secondary" id="add-option-btn">Add Option</button>
-            <div class="mb-3 mt-3">
-                <label for="password" class="form-label">Password (6 digits)</label>
-                <input type="password" class="form-control" id="password" name="password" pattern="\d{6}" required>
-            </div>
-            <div class="mb-3">
-                <label for="end_date" class="form-label">End Date</label>
-                <input type="datetime-local" class="form-control" id="end_date" name="end_date" required>
-            </div>
-            <button type="submit" class="btn btn-primary">Create Poll</button>
-        </form>
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-6"> <!-- 가로폭 줄이기 -->
+                <h1>Create a Poll</h1>
+                <form id="poll-form">
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Poll Title</label>
+                        <input type="text" class="form-control" id="title" name="title" required>
+                    </div>
+                    <div id="options-container" class="mb-3">
+                        <label class="form-label">Options</label>
+                        <div class="input-group mb-2">
+                            <input type="text" class="form-control" name="options[]" placeholder="Option 1" required>
+                        </div>
+                        <div class="input-group mb-2">
+                            <input type="text" class="form-control" name="options[]" placeholder="Option 2" required>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-secondary" id="add-option-btn">Add Option</button>
+                    <div class="mb-3 mt-3">
+                        <label for="password" class="form-label">Password (6 digits)</label>
+                        <input type="password" class="form-control" id="password" name="password" pattern="\d{6}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="end_date" class="form-label">End Date</label>
+                        <input type="datetime-local" class="form-control" id="end_date" name="end_date" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Create Poll</button>
+                </form>
 
-        <!-- 구분선 추가 -->
-        <hr>
+                <!-- 구분선 추가 -->
+                <hr>
 
-        <!-- Display messages and copy link feature -->
-        <div id="message-container" style="display: none;"></div>
+                <!-- Display messages and copy link feature -->
+                <div id="message-container" style="display: none;"></div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -154,7 +158,7 @@
             const messageContainer = document.getElementById('message-container');
             messageContainer.innerHTML = `
                 <span>Poll created! Share this link.</span> 
-                <button class="btn btn-outline-primary btn-sm" id="copy-link-btn">Copy Link</button>
+                <button class="btn btn-outline-secondary btn-sm" id="copy-link-btn">Copy Link</button>
                 <input type="text" class="form-control mt-2" id="poll-link" value="${link}" readonly>
             `;
             messageContainer.style.display = 'block'; // Show the container
