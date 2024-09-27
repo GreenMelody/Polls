@@ -29,20 +29,16 @@ def create_poll():
 
     # Validate input values
     if not title:
-        flash('Please provide a title for the poll.', 'danger')
         return jsonify({'success': False, 'message': 'Please provide a title for the poll.'})
 
     if len([option for option in options if option.strip()]) < 2:
-        flash('Please provide at least two options for the poll.', 'danger')
         return jsonify({'success': False, 'message': 'Please provide at least two options for the poll.'})
 
     try:
         end_date_dt = datetime.fromisoformat(end_date)
         if end_date_dt <= datetime.now():
-            flash('End date must be in the future.', 'danger')
             return jsonify({'success': False, 'message': 'End date must be in the future.'})
     except ValueError:
-        flash('Invalid date format.', 'danger')
         return jsonify({'success': False, 'message': 'Invalid date format.'})
 
     poll_id = generate_poll_id()
@@ -60,8 +56,7 @@ def create_poll():
 
     # Return poll link
     poll_link = url_for('view_poll', poll_id=poll_id, _external=True)
-    flash(f'Poll created! Share this link: {poll_link}', 'success')
-    return jsonify({'success': True, 'message': f'{poll_link}'})
+    return jsonify({'success': True, 'message': poll_link})
 
 @app.route('/poll/<poll_id>', methods=['GET', 'POST'])
 def view_poll(poll_id):
@@ -72,8 +67,7 @@ def view_poll(poll_id):
     conn.close()
 
     if not poll:
-        flash('Poll not found', 'danger')
-        return redirect(url_for('index'))
+        return jsonify({'success': False, 'message': 'Poll not found.'})
 
     title, options, end_date = poll
     options = eval(options)
@@ -88,15 +82,14 @@ def view_poll(poll_id):
         vote_exists = cursor.fetchone()
 
         if vote_exists:
-            flash('You have already voted', 'warning')
+            conn.close()
+            return jsonify({'success': False, 'message': 'You have already voted.'})
         else:
             cursor.execute('INSERT INTO votes (user_id, poll_id, option_index) VALUES (?, ?, ?)',
                            (user_id, poll_id, option_index))
             conn.commit()
-            flash('Vote recorded!', 'success')
-
-        conn.close()
-        return redirect(url_for('view_poll', poll_id=poll_id))
+            conn.close()
+            return jsonify({'success': True, 'message': 'Vote recorded successfully!'})
 
     current_time = datetime.now()
     is_expired = current_time > datetime.fromisoformat(end_date)
