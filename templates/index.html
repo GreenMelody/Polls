@@ -19,6 +19,12 @@
             border: 1px solid #ddd; /* 가로줄 스타일 */
             margin-top: 20px;
         }
+        .toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1055;
+        }
     </style>
 </head>
 <body>
@@ -61,6 +67,19 @@
         </div>
     </div>
 
+    <!-- Toast Container -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="copyToast" class="toast align-items-center text-bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body">
+                    Link copied to clipboard!
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // Function to set the default date to 3 days from now at 23:59:59 considering local time
         function setDefaultEndDate() {
@@ -166,11 +185,18 @@
             // Copy link to clipboard
             document.getElementById('copy-link-btn').addEventListener('click', function() {
                 navigator.clipboard.writeText(link).then(() => {
-                    alert('Link copied to clipboard!');
+                    showToast(); // Show toast notification
                 }).catch(err => {
                     console.error('Failed to copy: ', err);
                 });
             });
+        }
+
+        // Function to show toast notification
+        function showToast() {
+            const toastElement = document.getElementById('copyToast');
+            const toast = new bootstrap.Toast(toastElement);
+            toast.show();
         }
     </script>
 </body>
