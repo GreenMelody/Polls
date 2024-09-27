@@ -58,22 +58,35 @@
             border-radius: 5px;
             position: relative;
         }
-        .bar {
-            height: 16px;
-            background-color: #4a90e2;
-            margin-right: 8px;
-            border-radius: 4px;
-            transition: width 0.5s;
-        }
         .result-label {
-            flex-grow: 1;
+            flex: 3;
             padding-right: 8px;
             font-weight: bold;
-            word-break: break-all; /* 긴 텍스트 줄바꿈 */
+            word-break: break-word;
+        }
+        .bar {
+            flex: 8;
+            display: flex;
+            height: 16px;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-right: 8px;
+            position: relative;
+        }
+        .colored-bar {
+            background-color: #4a90e2;
+            transition: width 0.5s;
+        }
+        .empty-bar {
+            background-color: #e0e0e0;
+            transition: width 0.5s;
         }
         .result-count {
+            flex: 1;
             font-weight: bold;
             color: #555;
+            word-break: break-word;
+            text-align: right;
         }
         #resultsContainer {
             padding: 0px 15px;
@@ -101,7 +114,7 @@
                             <div id="resultsContainer"></div>
                         {% else %}
                             <form id="vote-form">
-                                <input type="hidden" id="user_id" name="user_id">
+                                <input type="" id="user_id" name="user_id">
                                 <div class="mb-3">
                                     {% for option in options %}
                                         <div class="form-check">
@@ -179,7 +192,10 @@
                         resultItem.className = 'result-bar';
                         resultItem.innerHTML = `
                             <span class="result-label">${optionText}</span>
-                            <div class="bar" style="width: ${votePercentage}%;"></div>
+                            <div class="bar">
+                                <div class="colored-bar" style="width: ${votePercentage}%;"></div>
+                                <div class="empty-bar" style="width: ${100 - votePercentage}%;"></div>
+                            </div>
                             <span class="result-count">${voteCount}</span>
                         `;
                         resultsContainer.appendChild(resultItem);
@@ -229,7 +245,7 @@
             toastElement.classList.remove('text-bg-success', 'text-bg-danger');
             toastElement.classList.add(`text-bg-${type}`);
 
-            const toast = new bootstrap.Toast(toastElement);
+            const toast = new bootstrap.Toast(toastElement,{ delay: 1000 });
             toast.show();
         }
     </script>
