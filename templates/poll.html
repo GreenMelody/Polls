@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ title }}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@3/dist/fp.min.js"></script> <!-- FingerprintJS 추가 -->
     <style>
         .card-custom {
             background-color: #f8f9fa;
@@ -68,6 +69,7 @@
             flex-grow: 1;
             padding-right: 8px;
             font-weight: bold;
+            word-break: break-all; /* 긴 텍스트 줄바꿈 */
         }
         .result-count {
             font-weight: bold;
@@ -99,7 +101,7 @@
                             <div id="resultsContainer"></div>
                         {% else %}
                             <form id="vote-form">
-                                <input type="hidden" id="user_id" name="user_id" value="user_id_placeholder">
+                                <input type="hidden" id="user_id" name="user_id">
                                 <div class="mb-3">
                                     {% for option in options %}
                                         <div class="form-check">
@@ -139,6 +141,14 @@
     <script>
         const pollOptions = JSON.parse('{{ options | tojson | safe }}');
 
+        // Load FingerprintJS and generate a unique user ID
+        FingerprintJS.load().then(fp => {
+            fp.get().then(result => {
+                const userId = result.visitorId;
+                document.getElementById('user_id').value = userId; // Set the user ID in the hidden input field
+            });
+        });
+
         document.getElementById('previewButton').addEventListener('click', function() {
             const pollId = "{{ poll_id }}";
             const resultsContainer = document.getElementById('resultsContainer');
@@ -162,7 +172,7 @@
                     data.forEach((result, index) => {
                         const optionText = result.option_text;
                         const voteCount = result.vote_count;
-                        const votePercentage = (voteCount / maxVotes) * 100;
+                        const votePercentage = voteCount > 0 ? (voteCount / maxVotes) * 100 : 0;
 
                         // Create result item
                         const resultItem = document.createElement('div');
@@ -192,7 +202,6 @@
             event.preventDefault();
 
             const formData = new FormData(this);
-            formData.set('user_id', 'user_id_placeholder');
 
             fetch('{{ url_for("view_poll", poll_id=poll_id) }}', {
                 method: 'POST',
