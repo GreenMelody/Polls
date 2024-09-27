@@ -36,7 +36,7 @@
             <button type="submit" class="btn btn-primary">Create Poll</button>
         </form>
 
-        <!-- Display messages -->
+        <!-- Display messages and copy link feature -->
         <div id="message-container" class="mt-4"></div>
     </div>
 
@@ -113,7 +113,11 @@
             })
             .then(response => response.json())
             .then(data => {
-                displayMessage(data.message, data.success ? 'success' : 'danger');
+                if (data.success) {
+                    displayLink(data.message); // Show the link and copy button
+                } else {
+                    displayMessage(data.message, 'danger');
+                }
             })
             .catch(error => {
                 console.error('Error:', error);
@@ -125,6 +129,25 @@
         function displayMessage(message, type) {
             const messageContainer = document.getElementById('message-container');
             messageContainer.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+        }
+
+        // Function to display link and copy functionality
+        function displayLink(link) {
+            const messageContainer = document.getElementById('message-container');
+            messageContainer.innerHTML = `
+                <span>Poll created! Share this link.</span> 
+                <button class="btn btn-outline-secondary btn-sm" id="copy-link-btn">Copy Link</button>
+                <input type="text" class="form-control mt-2" id="poll-link" value="${link}" readonly>
+            `;
+
+            // Copy link to clipboard
+            document.getElementById('copy-link-btn').addEventListener('click', function() {
+                navigator.clipboard.writeText(link).then(() => {
+                    alert('Link copied to clipboard!');
+                }).catch(err => {
+                    console.error('Failed to copy: ', err);
+                });
+            });
         }
     </script>
 </body>

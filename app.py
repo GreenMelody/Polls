@@ -61,7 +61,7 @@ def create_poll():
     # Return poll link
     poll_link = url_for('view_poll', poll_id=poll_id, _external=True)
     flash(f'Poll created! Share this link: {poll_link}', 'success')
-    return jsonify({'success': True, 'message': f'Poll created! Share this link: {poll_link}'})
+    return jsonify({'success': True, 'message': f'{poll_link}'})
 
 @app.route('/poll/<poll_id>', methods=['GET', 'POST'])
 def view_poll(poll_id):
