@@ -125,6 +125,9 @@
             text-align: left;
             margin: 5px 20px;
         }
+        .time-info p {
+            margin-bottom: 2px;
+        }
         .visit-counter {
             display: flex;
             align-items: center;
@@ -338,13 +341,16 @@
             fetch(`/preview/${pollId}`)
                 .then(response => response.json())
                 .then(data => {
-                    resultsContainer.innerHTML = '';
                     const maxVotes = Math.max(...data.map(result => result.vote_count), 1);
+                    let totalVotes = 0;
+                    resultsContainer.innerHTML = ` <p class="total-votes mt-1" id="total-votes">Total Votes: ${totalVotes}</p>`;
 
                     data.forEach((result, index) => {
                         const optionText = result.option_text;
                         const voteCount = result.vote_count;
                         const votePercentage = voteCount > 0 ? (voteCount / maxVotes) * 100 : 0;
+
+                        totalVotes += voteCount; // 총 투표자 수 계산
 
                         const resultItem = document.createElement('div');
                         resultItem.className = 'result-bar';
@@ -366,6 +372,9 @@
                             resultsContainer.appendChild(divider);
                         }
                     });
+
+                    // 총 투표자 수 표시
+                    document.getElementById('total-votes').textContent = `Total Votes: ${totalVotes}`;
                 })
                 .catch(error => {
                     showToast(translations[localStorage.getItem('selectedLanguage') || 'ko'].toastErrorOccurred, 'danger');
