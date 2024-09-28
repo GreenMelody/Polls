@@ -296,6 +296,7 @@
         document.getElementById('confirmDeleteButton').addEventListener('click', function() {
             const password = document.getElementById('deletePassword').value;
             const pollId = "{{ poll_id }}";
+            const deleteModal = bootstrap.Modal.getInstance(document.getElementById('deleteModal'));
 
             if (!password || password.length !== 6) {
                 showToast('Please enter a 6-digit password.', 'danger');
@@ -315,6 +316,9 @@
                 } else {
                     deleteAttempts++;
                     showToast(`비밀번호 오류. 시도 횟수 (${deleteAttempts}/3)`, 'danger');
+                    if (deleteAttempts >= 3) {
+                        deleteModal.hide(); // 3회 실패 시 모달 닫기
+                    }
                 }
             })
             .catch(error => {
