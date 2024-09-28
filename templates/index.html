@@ -17,6 +17,7 @@
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
             padding: 30px;
             margin-top: 5px;
+            margin-bottom: 100px;
             width: 50%;
             max-width: 600px;
             margin-left: auto;
@@ -76,7 +77,6 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 10px;
-            
             margin-top: 5px;
             width: 50%;
             max-width: 600px;
@@ -103,10 +103,6 @@
             border-bottom-right-radius: 5px;
             font-size: 0.85rem;
         }
-        .dual-text {
-            font-size: 0.9rem;
-            color: #555;
-        }
         .btn-selected {
             background-color: #4a90e2;
             color: white;
@@ -124,6 +120,7 @@
             color: #555;
             border-top: 1px solid #ddd;
             z-index: 1000;
+            white-space: pre-line;
         }
     </style>
 </head>
@@ -139,9 +136,6 @@
         </div>
     </div>
     <div class="container">
-        <!-- 상단바: 방문자 수 왼쪽, 언어 선택 오른쪽 -->
-        
-        
         <h1 id="create-poll-title" class="text-center mb-4">투표 생성</h1>
         <form id="poll-form">
             <div class="mb-3">
@@ -173,7 +167,7 @@
 
         <!-- Iframe Container -->
         <div id="iframe-container">
-            <span>아래 코드를 게시판의 HTML 탭에 붙여넣으세요<br><span class="dual-text">(Paste the code below into the HTML tab of the board)</span></span>
+            <span id="iframe-instructions"></span>
             <button class="btn btn-outline-secondary btn-sm" id="copy-iframe-btn">Copy text</button>
             <textarea id="iframe-code" class="form-control mt-2" rows="3" readonly></textarea>
         </div>
@@ -182,13 +176,8 @@
     </div>
 
     <!-- Footer -->
-    <footer class="footer">
-        해당 투표 페이지는 투표 제목, 내용, 날짜 및 투표 수 외에 어떠한 개인 정보도 저장하지 않습니다.<br>
-        투표 시 사용자 기기의 설정을 조합하여 고유한 ID가 부여되지만, 이를 통해 사용자를 특정할 수는 없습니다.<br>
-        1인 1표를 완벽하게 보장하지는 않습니다.<br>
-        (This poll page does not store any personal information other than the poll title, content, date, and vote count.<br>
-        A unique ID is assigned based on the user's device settings, but it does not identify the user.<br>
-        It does not fully guarantee one person, one vote.)
+    <footer class="footer" id="footer-message">
+        <!-- Content will be set dynamically -->
     </footer>
 
     <div class="toast-container position-fixed">
@@ -204,7 +193,6 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // 언어별 텍스트 설정
         const translations = {
             en: {
                 createPoll: "Create a Poll",
@@ -222,7 +210,12 @@
                 maxOptionsError: "You can add up to 10 options.",
                 titleError: "Please provide a title for the poll.",
                 optionError: "Please provide at least two options for the poll.",
-                dateError: "End date must be within 15 days from today."
+                dateError: "End date must be within 15 days from today.",
+                footerMessage: `This poll page does not store any personal information other than the poll title, content, date, and vote count.
+                A unique ID is assigned based on the user's device settings, but it does not identify the user.
+                It does not fully guarantee one person, one vote.`,
+                iframeInstructions: "Paste the code below into the HTML tab of the board.",
+                createLinkInstructions: "Poll link created successfully."
             },
             ko: {
                 createPoll: "투표 생성",
@@ -234,17 +227,21 @@
                 endDate: "종료 날짜 (최대 15일)",
                 submit: "투표 생성",
                 optionPlaceholder: ["옵션 1", "옵션 2", "새 옵션"],
-                toastCreateLink: "투표링크가 생성되었습니다.<br><span class='dual-text'>(Poll link created successfully)</span>",
+                toastCreateLink: "투표링크가 생성되었습니다.",
                 toastCopyLink: "링크가 클립보드에 복사되었습니다.",
                 toastCopyText: "텍스트가 클립보드에 복사되었습니다.",
                 maxOptionsError: "옵션은 최대 10개까지만 추가할 수 있습니다.",
                 titleError: "투표 제목을 입력하세요.",
                 optionError: "최소 두 개의 옵션을 입력하세요.",
-                dateError: "종료 날짜는 오늘부터 최대 15일 이내여야 합니다."
+                dateError: "종료 날짜는 오늘부터 최대 15일 이내여야 합니다.",
+                footerMessage: `해당 투표 페이지는 투표 제목, 내용, 날짜 및 투표 수 외에 어떠한 개인 정보도 저장하지 않습니다.
+                투표 시 사용자 기기의 설정을 조합하여 고유한 ID가 부여되지만, 이를 통해 사용자를 특정할 수는 없습니다.
+                1인 1표를 완벽하게 보장하지는 않습니다.`,
+                iframeInstructions: "아래 코드를 게시판의 HTML 탭에 붙여넣으세요.",
+                createLinkInstructions: "투표링크가 생성되었습니다."
             }
         };
 
-        // 언어 변경 함수
         function setLanguage(lang) {
             const elements = translations[lang];
             document.getElementById('create-poll-title').textContent = elements.createPoll;
@@ -254,6 +251,13 @@
             document.getElementById('password-label').textContent = elements.password;
             document.getElementById('end-date-label').textContent = elements.endDate;
             document.querySelector('button[type="submit"]').textContent = elements.submit;
+            document.getElementById('footer-message').textContent = elements.footerMessage;
+            document.getElementById('iframe-instructions').textContent = elements.iframeInstructions;
+
+            const createLinkInstructions = document.getElementById('create-link-instructions');
+            if (createLinkInstructions) {
+                createLinkInstructions.textContent = elements.createLinkInstructions;
+            }
 
             // 옵션 Placeholder 업데이트
             const placeholders = elements.optionPlaceholder;
@@ -271,7 +275,6 @@
             localStorage.setItem('selectedLanguage', lang);
         }
 
-        // 선택된 언어 버튼의 스타일 업데이트 함수
         function updateLanguageButtonStyles(selectedLang) {
             const langEnButton = document.getElementById('lang-en');
             const langKoButton = document.getElementById('lang-ko');
@@ -289,24 +292,21 @@
             }
         }
 
-        // 로컬 스토리지에서 언어 설정 불러오기
         function loadLanguage() {
             const savedLanguage = localStorage.getItem('selectedLanguage') || 'ko';
             setLanguage(savedLanguage);
         }
 
-        // 언어 선택 버튼 이벤트 리스너
         document.getElementById('lang-en').addEventListener('click', () => setLanguage('en'));
         document.getElementById('lang-ko').addEventListener('click', () => setLanguage('ko'));
 
-        // 페이지 로드 시 저장된 언어 설정 로드
         loadLanguage();
 
         function setDefaultEndDate() {
             const endDateInput = document.getElementById('end_date');
             const currentDate = new Date();
             const maxDate = new Date();
-            maxDate.setDate(currentDate.getDate() + 15); // 최대 15일 후까지 설정 가능
+            maxDate.setDate(currentDate.getDate() + 15);
             currentDate.setDate(currentDate.getDate() + 3);
             currentDate.setHours(23, 59, 59);
 
@@ -328,13 +328,12 @@
 
         window.onload = setDefaultEndDate;
 
-        let currentLanguage = localStorage.getItem('selectedLanguage') || 'ko';
         document.getElementById('add-option-btn').addEventListener('click', function() {
             const optionsContainer = document.getElementById('options-container');
             const optionCount = optionsContainer.querySelectorAll('input[name="options[]"]').length;
 
             if (optionCount >= 10) {
-                showToast(translations[currentLanguage].maxOptionsError, 'danger');
+                showToast(translations[localStorage.getItem('selectedLanguage') || 'ko'].maxOptionsError, 'danger');
                 return;
             }
 
@@ -342,8 +341,8 @@
             newOption.className = 'input-group mb-2';
 
             newOption.innerHTML = `
-                <input type="text" class="form-control" name="options[]" placeholder="${translations[currentLanguage].optionPlaceholder[2]}" required>
-                <button type="button" class="btn btn-outline-danger btn-sm ms-2 remove-option-btn">${translations[currentLanguage].deleteOption}</button>
+                <input type="text" class="form-control" name="options[]" placeholder="${translations[localStorage.getItem('selectedLanguage') || 'ko'].optionPlaceholder[2]}" required>
+                <button type="button" class="btn btn-outline-danger btn-sm ms-2 remove-option-btn">${translations[localStorage.getItem('selectedLanguage') || 'ko'].deleteOption}</button>
             `;
 
             optionsContainer.appendChild(newOption);
@@ -364,17 +363,17 @@
             maxDate.setDate(maxDate.getDate() + 15);
 
             if (!title) {
-                showToast(translations.ko.titleError, 'danger');
+                showToast(translations[localStorage.getItem('selectedLanguage') || 'ko'].titleError, 'danger');
                 return;
             }
 
             if (options.length < 2) {
-                showToast(translations.ko.optionError, 'danger');
+                showToast(translations[localStorage.getItem('selectedLanguage') || 'ko'].optionError, 'danger');
                 return;
             }
 
             if (endDate <= new Date() || endDate > maxDate) {
-                showToast(translations.ko.dateError, 'danger');
+                showToast(translations[localStorage.getItem('selectedLanguage') || 'ko'].dateError, 'danger');
                 return;
             }
 
@@ -389,7 +388,7 @@
                 if (data.success) {
                     displayLink(data.message);
                     displayIframeCode(data.message);
-                    showToast(translations.ko.toastCreateLink);
+                    showToast(translations[localStorage.getItem('selectedLanguage') || 'ko'].toastCreateLink);
                 } else {
                     showToast(data.message, 'danger');
                 }
@@ -403,7 +402,7 @@
         function displayLink(link) {
             const messageContainer = document.getElementById('message-container');
             messageContainer.innerHTML = `
-                <span>${translations.ko.toastCreateLink}</span> 
+                <span id="create-link-instructions">${translations[localStorage.getItem('selectedLanguage') || 'ko'].toastCreateLink}</span> 
                 <button class="btn btn-outline-secondary btn-sm" id="copy-link-btn">Copy Link</button>
                 <button class="btn btn-outline-primary btn-sm ms-2" id="go-to-link-btn">Go to Link</button>
                 <input type="text" class="form-control mt-2" id="poll-link" value="${link}" readonly>
@@ -412,7 +411,7 @@
 
             document.getElementById('copy-link-btn').addEventListener('click', function() {
                 navigator.clipboard.writeText(link).then(() => {
-                    showToast(translations.ko.toastCopyLink);
+                    showToast(translations[localStorage.getItem('selectedLanguage') || 'ko'].toastCopyLink);
                 }).catch(err => {
                     console.error('Failed to copy: ', err);
                     showToast('Failed to copy link.', 'danger');
@@ -420,7 +419,7 @@
             });
 
             document.getElementById('go-to-link-btn').addEventListener('click', function() {
-                window.open(link, '_blank'); // 새 탭에서 링크 열기
+                window.open(link, '_blank'); 
             });
         }
 
@@ -432,7 +431,7 @@
 
             document.getElementById('copy-iframe-btn').addEventListener('click', function() {
                 navigator.clipboard.writeText(iframeCode).then(() => {
-                    showToast(translations.ko.toastCopyText);
+                    showToast(translations[localStorage.getItem('selectedLanguage') || 'ko'].toastCopyText);
                 }).catch(err => {
                     console.error('Failed to copy: ', err);
                     showToast('Failed to copy iframe code.', 'danger');
