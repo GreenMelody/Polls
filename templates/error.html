@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Page Not Found</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #eef2f6;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            height: 100vh;
+            padding-top: 60px;
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .error-container {
+            text-align: center;
+            padding: 30px;
+            border-radius: 10px;
+            background-color: #ffffff;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        .error-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #4a4a4a;
+        }
+        .error-description {
+            font-size: 1rem;
+            margin-bottom: 20px;
+            color: #6c757d;
+            line-height: 1.5;
+        }
+        .btn-create {
+            background-color: #5c9ded;
+            color: #ffffff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            transition: background-color 0.3s, transform 0.2s;
+            box-shadow: 0 4px 10px rgba(92, 157, 237, 0.3);
+        }
+        .btn-create:hover {
+            background-color: #3d82d3;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(61, 130, 211, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="error-container">
+        <h1 class="error-title">페이지를 찾을 수 없습니다</h1>
+        <p class="error-description">
+            요청하신 페이지가 삭제되었거나 잘못된 링크일 수 있습니다.<br>
+            새로운 투표를 만들어보세요!
+        </p>
+        <a href="/" class="btn btn-create">새 투표 페이지 만들기</a>
+    </div>
+</body>
+</html>

@@ -66,7 +66,7 @@ def view_poll(poll_id):
     conn.close()
 
     if not poll:
-        return jsonify({'success': False, 'message': 'Poll not found.'})
+        return render_template('error.html')  # Render error page instead of JSON response
 
     title, options, end_date, created_at = poll
     options = eval(options)
