@@ -2,7 +2,7 @@ from flask import Flask, request, render_template, url_for, jsonify
 import sqlite3
 import hashlib
 import uuid
-from datetime import datetime
+from datetime import datetime, date
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
@@ -15,9 +15,33 @@ def hash_password(password):
 def generate_poll_id():
     return str(uuid.uuid4())
 
+def update_visitor_count():
+    conn = sqlite3.connect('visitors.db')
+    cursor = conn.cursor()
+    today = date.today().isoformat()
+
+    # Update today's count
+    cursor.execute('INSERT OR IGNORE INTO visits (date, count) VALUES (?, 0)', (today,))
+    cursor.execute('UPDATE visits SET count = count + 1 WHERE date = ?', (today,))
+
+    # Update total count
+    cursor.execute('UPDATE total_visits SET total_count = total_count + 1')
+    
+    # Get today's and total counts
+    cursor.execute('SELECT count FROM visits WHERE date = ?', (today,))
+    today_count = cursor.fetchone()[0]
+    cursor.execute('SELECT total_count FROM total_visits')
+    total_count = cursor.fetchone()[0]
+    
+    conn.commit()
+    conn.close()
+    
+    return today_count, total_count
+
 @app.route('/')
 def index():
-    return render_template('index.html')
+    today_count, total_count = update_visitor_count()
+    return render_template('index.html', today_count=today_count, total_count=total_count)
 
 @app.route('/create_poll', methods=['POST'])
 def create_poll():
@@ -61,38 +85,23 @@ def create_poll():
 def view_poll(poll_id):
     conn = sqlite3.connect('polls.db')
     cursor = conn.cursor()
-    cursor.execute('SELECT title, options, end_date, created_at FROM polls WHERE id = ?', (poll_id,))
+    
+    # Update poll visit count
+    cursor.execute('UPDATE polls SET visit_count = visit_count + 1 WHERE id = ?', (poll_id,))
+    
+    cursor.execute('SELECT title, options, end_date, created_at, visit_count FROM polls WHERE id = ?', (poll_id,))
     poll = cursor.fetchone()
+    conn.commit()
     conn.close()
 
     if not poll:
-        return render_template('error.html')  # Render error page instead of JSON response
+        return render_template('error.html')
 
-    title, options, end_date, created_at = poll
+    title, options, end_date, created_at, poll_visit_count = poll
     options = eval(options)
 
-    # Format dates for display
     formatted_start_time = datetime.fromisoformat(created_at).strftime('%Y-%m-%d %H:%M:%S')
-    formatted_end_time = datetime.fromisoformat(end_date).strftime('%Y-%m-%d %H:%M:00')
-
-    if request.method == 'POST':
-        user_id = request.form.get('user_id')
-        option_index = int(request.form.get('option'))
-
-        conn = sqlite3.connect('poll-result.db')
-        cursor = conn.cursor()
-        cursor.execute('SELECT * FROM votes WHERE user_id = ? AND poll_id = ?', (user_id, poll_id))
-        vote_exists = cursor.fetchone()
-
-        if vote_exists:
-            conn.close()
-            return jsonify({'success': False, 'message': 'You have already voted.'})
-        else:
-            cursor.execute('INSERT INTO votes (user_id, poll_id, option_index) VALUES (?, ?, ?)',
-                           (user_id, poll_id, option_index))
-            conn.commit()
-            conn.close()
-            return jsonify({'success': True, 'message': 'Vote recorded successfully!'})
+    formatted_end_time = datetime.fromisoformat(end_date).strftime('%Y-%m-%d %H:%M:%S')
 
     current_time = datetime.now()
     is_expired = current_time > datetime.fromisoformat(end_date)
@@ -104,7 +113,8 @@ def view_poll(poll_id):
         poll_id=poll_id,
         is_expired=is_expired,
         start_time=formatted_start_time,
-        end_time=formatted_end_time
+        end_time=formatted_end_time,
+        poll_visit_count=poll_visit_count
     )
 
 @app.route('/preview/<poll_id>', methods=['GET'])

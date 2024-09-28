@@ -125,8 +125,25 @@
             text-align: left;
             margin: 5px 20px;
         }
-        .time-info p {
-            margin-bottom: 2px;
+        .visit-counter {
+            display: flex;
+            align-items: center;
+        }
+        .visit-counter .hits {
+            background-color: #6c757d;
+            color: white;
+            padding: 1px 8px;
+            border-top-left-radius: 5px;
+            border-bottom-left-radius: 5px;
+            font-size: 0.85rem;
+        }
+        .visit-counter .count {
+            background-color: #9bc4ba;
+            color: white;
+            padding: 1px 8px;
+            border-top-right-radius: 5px;
+            border-bottom-right-radius: 5px;
+            font-size: 0.85rem;
         }
     </style>
 </head>
@@ -136,6 +153,10 @@
             <div class="col-md-8 col-lg-6">
                 <div class="card-custom">
                     <div class="card-header-custom">
+                        <div class="visit-counter">
+                            <span class="hits">hits</span>
+                            <span class="count">{{ poll_visit_count }}</span>
+                        </div>
                         {{ title }}
                         <button class="btn btn-danger-custom btn-sm" id="deleteButton"></button>
                     </div>
@@ -265,7 +286,7 @@
             document.getElementById('delete-password-label').textContent = elements.enterPassword;
             document.getElementById('cancelButton').textContent = elements.cancelButton;
             document.getElementById('confirmDeleteButton').textContent = elements.confirmDeleteButton;
-            
+
             const endMessageElement = document.getElementById('end-message');
             if (endMessageElement) {
                 endMessageElement.textContent = elements.endMessage;
@@ -352,8 +373,8 @@
         }
 
         const voteForm = document.getElementById('vote-form');
-        if(voteForm){
-            document.getElementById('vote-form').addEventListener('submit', function(event) {
+        if (voteForm) {
+            document.getElementById('vote-form').addEventListener('submit', function (event) {
                 event.preventDefault();
 
                 const formData = new FormData(this);
@@ -362,17 +383,17 @@
                     method: 'POST',
                     body: formData
                 })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        showToast(translations[localStorage.getItem('selectedLanguage') || 'ko'].toastVoteSuccess, 'success');
-                    } else {
-                        showToast(translations[localStorage.getItem('selectedLanguage') || 'ko'].toastVoteFailed, 'danger');
-                    }
-                })
-                .catch(error => {
-                    showToast(translations[localStorage.getItem('selectedLanguage') || 'ko'].toastErrorOccurred, 'danger');
-                });
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            showToast(translations[localStorage.getItem('selectedLanguage') || 'ko'].toastVoteSuccess, 'success');
+                        } else {
+                            showToast(translations[localStorage.getItem('selectedLanguage') || 'ko'].toastVoteFailed, 'danger');
+                        }
+                    })
+                    .catch(error => {
+                        showToast(translations[localStorage.getItem('selectedLanguage') || 'ko'].toastErrorOccurred, 'danger');
+                    });
             });
         }
 
@@ -400,25 +421,25 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ password })
             })
-            .then(response => response.json())
-            .then(data => {
-                const lang = localStorage.getItem('selectedLanguage') || 'ko';
-                if (data.success) {
-                    showToast(translations[lang].toastDeleteSuccess, 'success');
-                    setTimeout(() => {
-                        window.location.href = '/';
-                    }, 1500);
-                } else {
-                    deleteAttempts++;
-                    showToast(`translations[lang].toastDeleteFailed (${deleteAttempts}/3)`, 'danger');
-                    if (deleteAttempts >= 3) {
-                        deleteModal.hide();
+                .then(response => response.json())
+                .then(data => {
+                    const lang = localStorage.getItem('selectedLanguage') || 'ko';
+                    if (data.success) {
+                        showToast(translations[lang].toastDeleteSuccess, 'success');
+                        setTimeout(() => {
+                            window.location.href = '/';
+                        }, 1500);
+                    } else {
+                        deleteAttempts++;
+                        showToast(`translations[lang].toastDeleteFailed (${deleteAttempts}/3)`, 'danger');
+                        if (deleteAttempts >= 3) {
+                            deleteModal.hide();
+                        }
                     }
-                }
-            })
-            .catch(error => {
-                showToast(translations[localStorage.getItem('selectedLanguage') || 'ko'].toastErrorOccurred, 'danger');
-            });
+                })
+                .catch(error => {
+                    showToast(translations[localStorage.getItem('selectedLanguage') || 'ko'].toastErrorOccurred, 'danger');
+                });
         });
 
         function showToast(message, type) {

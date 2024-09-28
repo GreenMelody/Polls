@@ -1,3 +1,4 @@
+# setup_db.py
 import sqlite3
 
 def setup_databases():
@@ -11,7 +12,8 @@ def setup_databases():
             options TEXT, -- JSON format
             password TEXT, -- hashed password
             end_date DATETIME,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            visit_count INTEGER DEFAULT 0 -- 각 투표 페이지의 방문자 수
         )
     ''')
     conn.commit()
@@ -29,6 +31,25 @@ def setup_databases():
             PRIMARY KEY (user_id, poll_id)
         )
     ''')
+    conn.commit()
+    conn.close()
+
+    # Set up visitors database for tracking daily and total visits
+    conn = sqlite3.connect('visitors.db')
+    cursor = conn.cursor()
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS visits (
+            date DATE PRIMARY KEY,
+            count INTEGER DEFAULT 0
+        )
+    ''')
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS total_visits (
+            total_count INTEGER DEFAULT 0
+        )
+    ''')
+    # Initialize total visits if not present
+    cursor.execute('INSERT INTO total_visits (total_count) SELECT 0 WHERE NOT EXISTS (SELECT 1 FROM total_visits)')
     conn.commit()
     conn.close()
 
