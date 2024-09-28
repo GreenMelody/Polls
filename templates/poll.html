@@ -14,7 +14,7 @@
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             padding: 0;
-            margin-top: 20px;
+            margin-top: 10px;
             position: relative;
         }
         .card-header-custom {
@@ -151,17 +151,19 @@
     </style>
 </head>
 <body>
-    <div class="container mt-5">
+    <div class="container mt-2">
         <div class="row justify-content-center">
             <div class="col-md-8 col-lg-6">
+                <div class="header-controls d-flex justify-content-between align-items-center mb-2">
+                    <div class="visit-counter">
+                        <span class="hits">hits</span>
+                        <span class="count">{{ poll_visit_count }}</span>
+                    </div>
+                    <button class="btn btn-danger-custom btn-sm" id="deleteButton"></button>
+                </div>
                 <div class="card-custom">
                     <div class="card-header-custom">
-                        <div class="visit-counter">
-                            <span class="hits">hits</span>
-                            <span class="count">{{ poll_visit_count }}</span>
-                        </div>
                         {{ title }}
-                        <button class="btn btn-danger-custom btn-sm" id="deleteButton"></button>
                     </div>
                     <div class="card-body-custom">
                         {% if is_expired %}
@@ -169,7 +171,7 @@
                             <div id="resultsContainer"></div>
                         {% else %}
                             <form id="vote-form">
-                                <input type="" id="user_id" name="user_id">
+                                <input type="hidden" id="user_id" name="user_id">
                                 <div class="mb-3">
                                     {% for option in options %}
                                         <div class="form-check">
