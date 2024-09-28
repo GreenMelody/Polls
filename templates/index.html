@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta http-equiv="X-UA-Compatible=IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Create Poll</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -78,6 +78,11 @@
         .dual-text {
             font-size: 0.9rem;
             color: #555;
+        }
+        .btn-selected {
+            background-color: #4a90e2;
+            color: white;
+            border: none;
         }
     </style>
 </head>
@@ -196,8 +201,29 @@
                 input.placeholder = placeholders[index] || placeholders[2];
             });
 
+            // 선택된 언어에 따라 버튼 스타일 업데이트
+            updateLanguageButtonStyles(lang);
+
             // 선택된 언어를 로컬 스토리지에 저장
             localStorage.setItem('selectedLanguage', lang);
+        }
+
+        // 선택된 언어 버튼의 스타일 업데이트 함수
+        function updateLanguageButtonStyles(selectedLang) {
+            const langEnButton = document.getElementById('lang-en');
+            const langKoButton = document.getElementById('lang-ko');
+
+            if (selectedLang === 'en') {
+                langEnButton.classList.add('btn-selected');
+                langEnButton.classList.remove('btn-outline-secondary');
+                langKoButton.classList.remove('btn-selected');
+                langKoButton.classList.add('btn-outline-secondary');
+            } else {
+                langKoButton.classList.add('btn-selected');
+                langKoButton.classList.remove('btn-outline-secondary');
+                langEnButton.classList.remove('btn-selected');
+                langEnButton.classList.add('btn-outline-secondary');
+            }
         }
 
         // 로컬 스토리지에서 언어 설정 불러오기
