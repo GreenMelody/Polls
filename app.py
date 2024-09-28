@@ -71,7 +71,7 @@ def view_poll(poll_id):
     title, options, end_date, created_at = poll
     options = eval(options)
 
-    # 날짜 형식을 통일하고 초를 맞추는 부분
+    # Format dates for display
     formatted_start_time = datetime.fromisoformat(created_at).strftime('%Y-%m-%d %H:%M:%S')
     formatted_end_time = datetime.fromisoformat(end_date).strftime('%Y-%m-%d %H:%M:00')
 
@@ -98,18 +98,17 @@ def view_poll(poll_id):
     is_expired = current_time > datetime.fromisoformat(end_date)
 
     return render_template(
-        'poll.html', 
-        title=title, 
-        options=options, 
-        poll_id=poll_id, 
-        is_expired=is_expired, 
-        start_time=formatted_start_time, 
+        'poll.html',
+        title=title,
+        options=options,
+        poll_id=poll_id,
+        is_expired=is_expired,
+        start_time=formatted_start_time,
         end_time=formatted_end_time
     )
 
 @app.route('/preview/<poll_id>', methods=['GET'])
 def preview_poll(poll_id):
-    # Fetch options from the poll
     conn = sqlite3.connect('polls.db')
     cursor = conn.cursor()
     cursor.execute('SELECT options FROM polls WHERE id = ?', (poll_id,))
@@ -121,25 +120,57 @@ def preview_poll(poll_id):
 
     options = eval(poll[0])
 
-    # Fetch votes from the poll results
     conn = sqlite3.connect('poll-result.db')
     cursor = conn.cursor()
     cursor.execute('''
-        SELECT option_index, COUNT(*) as vote_count 
-        FROM votes 
-        WHERE poll_id = ? 
+        SELECT option_index, COUNT(*) as vote_count
+        FROM votes
+        WHERE poll_id = ?
         GROUP BY option_index
     ''', (poll_id,))
     vote_results = cursor.fetchall()
     conn.close()
 
-    # Combine options with votes
     results = [{'option_index': i, 'option_text': options[i], 'vote_count': 0} for i in range(len(options))]
     for vote in vote_results:
         results[vote[0]]['vote_count'] = vote[1]
 
     return jsonify(results)
 
+@app.route('/delete_poll/<poll_id>', methods=['POST'])
+def delete_poll(poll_id):
+    data = request.json
+    password = data.get('password')
+
+    if not password or len(password) != 6 or not password.isdigit():
+        return jsonify({'success': False, 'message': 'Invalid password format.'})
+
+    conn = sqlite3.connect('polls.db')
+    cursor = conn.cursor()
+    cursor.execute('SELECT password FROM polls WHERE id = ?', (poll_id,))
+    poll = cursor.fetchone()
+
+    if not poll:
+        conn.close()
+        return jsonify({'success': False, 'message': 'Poll not found.'})
+
+    hashed_password = poll[0]
+
+    if hash_password(password) != hashed_password:
+        conn.close()
+        return jsonify({'success': False, 'message': 'Incorrect password.'})
+
+    cursor.execute('DELETE FROM polls WHERE id = ?', (poll_id,))
+    conn.commit()
+    conn.close()
+
+    conn = sqlite3.connect('poll-result.db')
+    cursor = conn.cursor()
+    cursor.execute('DELETE FROM votes WHERE poll_id = ?', (poll_id,))
+    conn.commit()
+    conn.close()
+
+    return jsonify({'success': True, 'message': 'Poll deleted successfully.'})
 
 if __name__ == '__main__':
     app.run(debug=True)
