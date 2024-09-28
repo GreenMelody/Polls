@@ -375,6 +375,7 @@
             messageContainer.innerHTML = `
                 <span>${translations.ko.toastCreateLink}</span> 
                 <button class="btn btn-outline-secondary btn-sm" id="copy-link-btn">Copy Link</button>
+                <button class="btn btn-outline-primary btn-sm ms-2" id="go-to-link-btn">Go to Link</button>
                 <input type="text" class="form-control mt-2" id="poll-link" value="${link}" readonly>
             `;
             messageContainer.style.display = 'block';
@@ -386,6 +387,10 @@
                     console.error('Failed to copy: ', err);
                     showToast('Failed to copy link.', 'danger');
                 });
+            });
+
+            document.getElementById('go-to-link-btn').addEventListener('click', function() {
+                window.open(link, '_blank'); // 새 탭에서 링크 열기
             });
         }
 
