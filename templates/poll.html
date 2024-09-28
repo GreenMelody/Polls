@@ -245,11 +245,19 @@
             const elements = translations[lang];
 
             // 텍스트 설정
+            // document.getElementById('end-message').textContent = elements.endMessage;
+            document.getElementById('start-time-label').innerHTML = `<strong>${elements.startTime}</strong> {{ start_time }}`;
+            document.getElementById('end-time-label').innerHTML = `<strong>${elements.endTime}</strong> {{ end_time }}`;
             document.getElementById('deleteButton').textContent = elements.deletePoll;
             document.getElementById('deleteModalLabel').textContent = elements.deletePoll;
             document.getElementById('delete-password-label').textContent = elements.enterPassword;
             document.getElementById('cancelButton').textContent = elements.cancelButton;
             document.getElementById('confirmDeleteButton').textContent = elements.confirmDeleteButton;
+            
+            const endMessageElement = document.getElementById('end-message');
+            if (endMessageElement) {
+                endMessageElement.textContent = elements.endMessage;
+            }
 
             const voteButton = document.getElementById('vote-button');
             if (voteButton) {
