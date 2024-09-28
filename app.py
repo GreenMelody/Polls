@@ -103,6 +103,23 @@ def view_poll(poll_id):
     formatted_start_time = datetime.fromisoformat(created_at).strftime('%Y-%m-%d %H:%M:%S')
     formatted_end_time = datetime.fromisoformat(end_date).strftime('%Y-%m-%d %H:%M:%S')
 
+    if request.method == 'POST':
+        user_id = request.form.get('user_id')
+        option_index = int(request.form.get('option'))
+        conn = sqlite3.connect('poll-result.db')
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM votes WHERE user_id = ? AND poll_id = ?', (user_id, poll_id))
+        vote_exists = cursor.fetchone()
+        if vote_exists:
+            conn.close()
+            return jsonify({'success': False, 'message': 'You have already voted.'})
+        else:
+            cursor.execute('INSERT INTO votes (user_id, poll_id, option_index) VALUES (?, ?, ?)',
+                           (user_id, poll_id, option_index))
+            conn.commit()
+            conn.close()
+            return jsonify({'success': True, 'message': 'Vote recorded successfully!'})
+
     current_time = datetime.now()
     is_expired = current_time > datetime.fromisoformat(end_date)
 
