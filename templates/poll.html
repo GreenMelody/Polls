@@ -128,11 +128,11 @@
                 <div class="card-custom">
                     <div class="card-header-custom">
                         {{ title }}
-                        <button class="btn btn-danger btn-sm" id="deleteButton">삭제</button>
+                        <button class="btn btn-danger btn-sm" id="deleteButton"></button>
                     </div>
                     <div class="card-body-custom">
                         {% if is_expired %}
-                            <h5 class="text-center">This poll has ended. Here are the results:</h5>
+                            <h5 id="end-message" class="text-center"></h5>
                             <div id="resultsContainer"></div>
                         {% else %}
                             <form id="vote-form">
@@ -151,13 +151,13 @@
                         {% endif %}
                     </div>
                     <div class="time-info">
-                        <p><strong>Start Time:</strong> {{ start_time }}</p>
-                        <p><strong>End &nbsp;Time:</strong> {{ end_time }}</p>
+                        <p id="start-time-label"><strong>Start Time:</strong> {{ start_time }}</p>
+                        <p id="end-time-label"><strong>End Time:</strong> {{ end_time }}</p>
                     </div>
                     {% if not is_expired %}
-                        <button type="submit" form="vote-form" class="btn btn-custom m-3">Vote</button>
+                        <button type="submit" form="vote-form" class="btn btn-custom m-3" id="vote-button"></button>
                     {% endif %}
-                    <button id="previewButton" class="btn btn-custom m-3">Preview Results</button>
+                    <button id="previewButton" class="btn btn-custom m-3"></button>
                     <div id="resultsContainer"></div>
 
                     <!-- Toast Container -->
@@ -181,17 +181,17 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="deleteModalLabel">Delete Poll</h5>
+                    <h5 class="modal-title" id="deleteModalLabel"></h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <label for="deletePassword" class="form-label">Enter Password:</label>
-                    <input type="password" class="form-control" id="deletePassword" maxlength="6" placeholder="6-digit password" required>
+                    <label for="deletePassword" class="form-label" id="delete-password-label"></label>
+                    <input type="password" class="form-control" id="deletePassword" maxlength="6" required>
                     <div id="deleteError" class="text-danger mt-2" style="display: none;"></div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
-                    <button type="button" class="btn btn-danger" id="confirmDeleteButton">삭제</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="cancelButton"></button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteButton"></button>
                 </div>
             </div>
         </div>
@@ -199,6 +199,74 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // 언어별 텍스트 설정
+        const translations = {
+            en: {
+                endMessage: "This poll has ended. Here are the results:",
+                startTime: "Start Time:",
+                endTime: "End Time:",
+                voteButton: "Vote",
+                previewButton: "Preview Results",
+                deletePoll: "Delete Poll",
+                enterPassword: "Enter Password:",
+                cancelButton: "Cancel",
+                confirmDeleteButton: "Delete",
+                toastDeleteSuccess: "Poll deleted successfully.",
+                toastDeleteFailed: "Failed to delete poll.",
+                toastVoteSuccess: "Vote recorded successfully!",
+                toastVoteFailed: "You have already voted.",
+                toast6DigitPassword: "Please enter a 6-digit password.",
+                toastRetryLimit: "You have exceeded the password attempt limit. Please try again later.",
+                toastErrorOccurred: "An error occurred."
+            },
+            ko: {
+                endMessage: "이 투표는 종료되었습니다. 결과는 다음과 같습니다:",
+                startTime: "시작 시간:",
+                endTime: "종료 시간:",
+                voteButton: "투표하기",
+                previewButton: "결과 미리보기",
+                deletePoll: "투표 삭제",
+                enterPassword: "비밀번호를 입력하세요:",
+                cancelButton: "취소",
+                confirmDeleteButton: "삭제",
+                toastDeleteSuccess: "투표가 성공적으로 삭제되었습니다.",
+                toastDeleteFailed: "투표 삭제에 실패했습니다.",
+                toastVoteSuccess: "투표가 기록되었습니다!",
+                toastVoteFailed: "이미 투표하셨습니다.",
+                toast6DigitPassword: "6자리 비밀번호를 입력하세요.",
+                toastRetryLimit: "비밀번호를 3회 이상 틀렸습니다. 잠시 후, 다시 시도해 주세요.",
+                toastErrorOccurred: "오류가 발생했습니다."
+            }
+        };
+
+        // 언어 설정 함수
+        function setLanguage() {
+            const lang = localStorage.getItem('selectedLanguage') || 'ko';
+            const elements = translations[lang];
+
+            // 텍스트 설정
+            document.getElementById('deleteButton').textContent = elements.deletePoll;
+            document.getElementById('deleteModalLabel').textContent = elements.deletePoll;
+            document.getElementById('delete-password-label').textContent = elements.enterPassword;
+            document.getElementById('cancelButton').textContent = elements.cancelButton;
+            document.getElementById('confirmDeleteButton').textContent = elements.confirmDeleteButton;
+
+            const voteButton = document.getElementById('vote-button');
+            if (voteButton) {
+                voteButton.innerHTML = elements.voteButton;
+            }
+
+            const previewButton = document.getElementById('previewButton');
+            if (previewButton) {
+                previewButton.innerHTML = elements.previewButton;
+            }
+
+            localStorage.setItem('selectedLanguage', lang);
+        }
+
+        // 페이지 로드 시 언어 설정
+        document.addEventListener('DOMContentLoaded', setLanguage);
+
         const pollOptions = JSON.parse('{{ options | tojson | safe }}');
         let deleteAttempts = 0;
 
@@ -256,8 +324,7 @@
                     });
                 })
                 .catch(error => {
-                    console.error('Error:', error);
-                    showToast('An error occurred while fetching results.', 'danger');
+                    showToast(translations[localStorage.getItem('selectedLanguage') || 'ko'].toastErrorOccurred, 'danger');
                 });
         }
 
@@ -273,20 +340,19 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    showToast(data.message, 'success');
+                    showToast(translations[localStorage.getItem('selectedLanguage') || 'ko'].toastVoteSuccess, 'success');
                 } else {
-                    showToast(data.message, 'danger');
+                    showToast(translations[localStorage.getItem('selectedLanguage') || 'ko'].toastVoteFailed, 'danger');
                 }
             })
             .catch(error => {
-                console.error('Error:', error);
-                showToast('An error occurred while voting.', 'danger');
+                showToast(translations[localStorage.getItem('selectedLanguage') || 'ko'].toastErrorOccurred, 'danger');
             });
         });
 
         document.getElementById('deleteButton').addEventListener('click', function() {
             if (deleteAttempts >= 3) {
-                showToast('비밀번호를 3회 이상 틀렸습니다. 잠시후, 다시 시도해 주세요.', 'danger');
+                showToast(translations[localStorage.getItem('selectedLanguage') || 'ko'].toastRetryLimit, 'danger');
                 return;
             }
             const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
@@ -299,7 +365,7 @@
             const deleteModal = bootstrap.Modal.getInstance(document.getElementById('deleteModal'));
 
             if (!password || password.length !== 6) {
-                showToast('Please enter a 6-digit password.', 'danger');
+                showToast(translations[localStorage.getItem('selectedLanguage') || 'ko'].toast6DigitPassword, 'danger');
                 return;
             }
 
@@ -310,22 +376,22 @@
             })
             .then(response => response.json())
             .then(data => {
+                const lang = localStorage.getItem('selectedLanguage') || 'ko';
                 if (data.success) {
-                    showToast('Poll deleted successfully.', 'success'); // Show success toast
+                    showToast(translations[lang].toastDeleteSuccess, 'success');
                     setTimeout(() => {
-                        window.location.href = '/'; // Redirect after showing toast
-                    }, 1500); // Delay redirect to allow the toast to be visible
+                        window.location.href = '/';
+                    }, 1500);
                 } else {
                     deleteAttempts++;
-                    showToast(`비밀번호 오류. 시도 횟수 (${deleteAttempts}/3)`, 'danger');
+                    showToast(`translations[lang].toastDeleteFailed (${deleteAttempts}/3)`, 'danger');
                     if (deleteAttempts >= 3) {
-                        deleteModal.hide(); // Close the modal after 3 failed attempts
+                        deleteModal.hide();
                     }
                 }
             })
             .catch(error => {
-                console.error('Error:', error);
-                showToast('An error occurred while deleting the poll.', 'danger');
+                showToast(translations[localStorage.getItem('selectedLanguage') || 'ko'].toastErrorOccurred, 'danger');
             });
         });
 
