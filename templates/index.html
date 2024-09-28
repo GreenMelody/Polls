@@ -181,6 +181,7 @@
                 pollTitle: "Poll Title",
                 options: "Options",
                 addOption: "Add Option",
+                deleteOption: "Delete",
                 password: "Password (6 digits)",
                 endDate: "End Date (up to 15 days)",
                 submit: "Create Poll",
@@ -198,6 +199,7 @@
                 pollTitle: "투표 제목",
                 options: "옵션",
                 addOption: "옵션 추가",
+                deleteOption: "삭제",
                 password: "비밀번호 (6자리)",
                 endDate: "종료 날짜 (최대 15일)",
                 submit: "투표 생성",
@@ -230,10 +232,12 @@
                 input.placeholder = placeholders[index] || placeholders[2];
             });
 
-            // 선택된 언어에 따라 버튼 스타일 업데이트
-            updateLanguageButtonStyles(lang);
+            // 옵션 삭제 버튼 텍스트 업데이트
+            document.querySelectorAll('.remove-option-btn').forEach(button => {
+                button.textContent = elements.deleteOption;
+            });
 
-            // 선택된 언어를 로컬 스토리지에 저장
+            updateLanguageButtonStyles(lang);
             localStorage.setItem('selectedLanguage', lang);
         }
 
@@ -294,19 +298,29 @@
 
         window.onload = setDefaultEndDate;
 
+        let currentLanguage = localStorage.getItem('selectedLanguage') || 'ko';
         document.getElementById('add-option-btn').addEventListener('click', function() {
             const optionsContainer = document.getElementById('options-container');
             const optionCount = optionsContainer.querySelectorAll('input[name="options[]"]').length;
 
             if (optionCount >= 10) {
-                showToast(translations.ko.maxOptionsError, 'danger');
+                showToast(translations[currentLanguage].maxOptionsError, 'danger');
                 return;
             }
 
             const newOption = document.createElement('div');
             newOption.className = 'input-group mb-2';
-            newOption.innerHTML = `<input type="text" class="form-control" name="options[]" placeholder="${translations.ko.optionPlaceholder[2]}" required>`;
+
+            newOption.innerHTML = `
+                <input type="text" class="form-control" name="options[]" placeholder="${translations[currentLanguage].optionPlaceholder[2]}" required>
+                <button type="button" class="btn btn-outline-danger btn-sm ms-2 remove-option-btn">${translations[currentLanguage].deleteOption}</button>
+            `;
+
             optionsContainer.appendChild(newOption);
+
+            newOption.querySelector('.remove-option-btn').addEventListener('click', function() {
+                optionsContainer.removeChild(newOption);
+            });
         });
 
         document.getElementById('poll-form').addEventListener('submit', function(event) {
