@@ -16,7 +16,7 @@
             border-radius: 10px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
             padding: 30px;
-            margin-top: 50px;
+            margin-top: 5px;
             width: 50%;
             max-width: 600px;
             margin-left: auto;
@@ -76,6 +76,12 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 10px;
+            
+            margin-top: 5px;
+            width: 50%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
         }
         .visit-counter {
             display: flex;
@@ -109,18 +115,19 @@
     </style>
 </head>
 <body>
+    <div class="top-bar">
+        <div class="visit-counter">
+            <span class="hits">hits</span>
+            <span class="count">{{ today_count }} / {{ total_count }}</span>
+        </div>
+        <div class="language-selector">
+            <button id="lang-en" class="btn btn-outline-secondary btn-sm">English</button>
+            <button id="lang-ko" class="btn btn-outline-secondary btn-sm">한국어</button>
+        </div>
+    </div>
     <div class="container">
         <!-- 상단바: 방문자 수 왼쪽, 언어 선택 오른쪽 -->
-        <div class="top-bar">
-            <div class="visit-counter">
-                <span class="hits">hits</span>
-                <span class="count">{{ today_count }} / {{ total_count }}</span>
-            </div>
-            <div class="language-selector">
-                <button id="lang-en" class="btn btn-outline-secondary btn-sm">English</button>
-                <button id="lang-ko" class="btn btn-outline-secondary btn-sm">한국어</button>
-            </div>
-        </div>
+        
         
         <h1 id="create-poll-title" class="text-center mb-4">투표 생성</h1>
         <form id="poll-form">
