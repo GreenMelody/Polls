@@ -112,6 +112,19 @@
             color: white;
             border: none;
         }
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: #f8f9fa;
+            text-align: center;
+            padding: 10px;
+            font-size: 0.9rem;
+            color: #555;
+            border-top: 1px solid #ddd;
+            z-index: 1000;
+        }
     </style>
 </head>
 <body>
@@ -167,6 +180,16 @@
 
         <div id="message-container" style="display: none;"></div>
     </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        해당 투표 페이지는 투표 제목, 내용, 날짜 및 투표 수 외에 어떠한 개인 정보도 저장하지 않습니다.<br>
+        투표 시 사용자 기기의 설정을 조합하여 고유한 ID가 부여되지만, 이를 통해 사용자를 특정할 수는 없습니다.<br>
+        1인 1표를 완벽하게 보장하지는 않습니다.<br>
+        (This poll page does not store any personal information other than the poll title, content, date, and vote count.<br>
+        A unique ID is assigned based on the user's device settings, but it does not identify the user.<br>
+        It does not fully guarantee one person, one vote.)
+    </footer>
 
     <div class="toast-container position-fixed">
         <div id="copyToast" class="toast align-items-center text-bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
