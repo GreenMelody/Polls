@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta http-equiv="X-UA-Compatible=IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Page Not Found</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -56,12 +56,36 @@
 </head>
 <body>
     <div class="error-container">
-        <h1 class="error-title">페이지를 찾을 수 없습니다</h1>
-        <p class="error-description">
-            요청하신 페이지가 삭제되었거나 잘못된 링크일 수 있습니다.<br>
-            새로운 투표를 만들어보세요!
-        </p>
-        <a href="/" class="btn btn-create">새 투표 페이지 만들기</a>
+        <h1 id="error-title" class="error-title"></h1>
+        <p id="error-description" class="error-description"></p>
+        <a href="/" id="create-button" class="btn btn-create"></a>
     </div>
+
+    <script>
+        const translations = {
+            en: {
+                errorTitle: "Page Not Found",
+                errorDescription: "The page you requested has been deleted or the link may be incorrect. Create a new poll!",
+                createButton: "Create a New Poll Page"
+            },
+            ko: {
+                errorTitle: "페이지를 찾을 수 없습니다",
+                errorDescription: "요청하신 페이지가 삭제되었거나 잘못된 링크일 수 있습니다. 새로운 투표를 만들어보세요!",
+                createButton: "새 투표 페이지 만들기"
+            }
+        };
+
+        function setLanguage() {
+            const lang = localStorage.getItem('selectedLanguage') || 'ko';
+            const elements = translations[lang];
+
+            document.getElementById('error-title').textContent = elements.errorTitle;
+            document.getElementById('error-description').textContent = elements.errorDescription;
+            document.getElementById('create-button').textContent = elements.createButton;
+        }
+
+        // Initialize language setting
+        setLanguage();
+    </script>
 </body>
 </html>
