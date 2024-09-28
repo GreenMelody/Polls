@@ -66,8 +66,9 @@
         }
         .toast-container {
             position: fixed;
-            bottom: 20px;
-            right: 20px;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
             z-index: 1055;
         }
     </style>
@@ -105,7 +106,7 @@
 
         <!-- Iframe Container -->
         <div id="iframe-container">
-            <sapn>아래 코드를 게시판의 HTML 탭에 붙여넣으세요</span>
+            <span>아래 코드를 게시판의 HTML 탭에 붙여넣으세요</span>
             <button class="btn btn-outline-secondary btn-sm mb-2" id="copy-iframe-btn">Copy text</button>
             <textarea id="iframe-code" class="form-control" rows="3" readonly></textarea>
         </div>
@@ -114,11 +115,11 @@
 
     </div>
 
-    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+    <div class="toast-container position-fixed">
         <div id="copyToast" class="toast align-items-center text-bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
             <div class="d-flex">
-                <div class="toast-body">
-                    Link copied to clipboard!
+                <div class="toast-body" id="toast-message">
+                    <!-- Toast message will be dynamically updated -->
                 </div>
                 <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
             </div>
@@ -185,6 +186,7 @@
                 if (data.success) {
                     displayLink(data.message);
                     displayIframeCode(data.message); // Show iframe code with the generated link
+                    showToast('투표링크가 생성되었습니다.');
                 } else {
                     displayMessage(data.message, 'danger');
                 }
@@ -212,7 +214,7 @@
 
             document.getElementById('copy-link-btn').addEventListener('click', function() {
                 navigator.clipboard.writeText(link).then(() => {
-                    showToast();
+                    showToast('링크가 클립보드에 복사되었습니다.');
                 }).catch(err => {
                     console.error('Failed to copy: ', err);
                 });
@@ -227,15 +229,16 @@
 
             document.getElementById('copy-iframe-btn').addEventListener('click', function() {
                 navigator.clipboard.writeText(iframeCode).then(() => {
-                    showToast();
+                    showToast('텍스트가 클립보드에 복사되었습니다.');
                 }).catch(err => {
                     console.error('Failed to copy: ', err);
                 });
             });
         }
 
-        function showToast() {
+        function showToast(message) {
             const toastElement = document.getElementById('copyToast');
+            document.getElementById('toast-message').textContent = message;
             const toast = new bootstrap.Toast(toastElement);
             toast.show();
         }
