@@ -311,13 +311,15 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    showToast('Poll deleted successfully.', 'success');
-                    window.location.href = '/';
+                    showToast('Poll deleted successfully.', 'success'); // Show success toast
+                    setTimeout(() => {
+                        window.location.href = '/'; // Redirect after showing toast
+                    }, 1500); // Delay redirect to allow the toast to be visible
                 } else {
                     deleteAttempts++;
                     showToast(`비밀번호 오류. 시도 횟수 (${deleteAttempts}/3)`, 'danger');
                     if (deleteAttempts >= 3) {
-                        deleteModal.hide(); // 3회 실패 시 모달 닫기
+                        deleteModal.hide(); // Close the modal after 3 failed attempts
                     }
                 }
             })
