@@ -20,10 +20,11 @@
             margin-bottom: 100px;
             margin-left: auto;
             margin-right: auto;
+            overflow: auto;
         }
         .table {
-            table-layout: fixed;
             width: 100%;
+            border-collapse: collapse;
         }
         .table thead th {
             background-color: #a1b3c9;
@@ -33,8 +34,12 @@
             word-wrap: break-word;
             overflow: hidden;
             text-align: center;
+            padding: 10px;
         }
-    </style>
+        .table td:nth-child(2) {
+            max-width: 500px;
+        }
+    </style>    
 </head>
 <body>
     <div class="container">
