@@ -346,7 +346,8 @@
                     const totalVotes = data.reduce((acc, result) => acc + result.vote_count, 0);
                     const maxVotes = Math.max(...data.map(result => result.vote_count), 1); // 가장 많은 투표 수
 
-                    resultsContainer.innerHTML = `<p class="total-votes mt-1" id="total-votes">Total Votes: ${totalVotes}</p>`;
+                    resultsContainer.innerHTML = `<p class="total-votes mt-3" id="total-votes">Total Votes: ${totalVotes}</p>
+                                                    <div class="divider"></div>`;
 
                     data.forEach((result, index) => {
                         const optionText = result.option_text;
