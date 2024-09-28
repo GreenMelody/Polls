@@ -38,13 +38,22 @@
             position: relative;
         }
         .btn-custom {
-            background-color: #4a90e2;
+            background-color: #9bc4ba;
             border: none;
             color: white;
             transition: background-color 0.3s;
         }
         .btn-custom:hover {
-            background-color: #357ABD;
+            background-color: #88BDBC;
+        }
+        .btn-danger-custom {
+            background-color: #e9ecef;
+            border: none;
+            color: black;
+            transition: background-color 0.3s;
+        }
+        .btn-danger-custom:hover {
+            background-color: #b5b9bd;
         }
         .toast-container {
             position: absolute;
@@ -128,7 +137,7 @@
                 <div class="card-custom">
                     <div class="card-header-custom">
                         {{ title }}
-                        <button class="btn btn-danger btn-sm" id="deleteButton"></button>
+                        <button class="btn btn-danger-custom btn-sm" id="deleteButton"></button>
                     </div>
                     <div class="card-body-custom">
                         {% if is_expired %}
@@ -209,7 +218,7 @@
                 voteButton: "Vote",
                 previewButton: "Preview Results",
                 createNewPollButton: "Create a New Poll",
-                deletePoll: "Delete Poll",
+                deletePoll: "Delete",
                 enterPassword: "Enter Password:",
                 cancelButton: "Cancel",
                 confirmDeleteButton: "Delete",
@@ -228,7 +237,7 @@
                 voteButton: "투표하기",
                 previewButton: "결과 미리보기",
                 createNewPollButton: "새 투표 생성하기",
-                deletePoll: "투표 삭제",
+                deletePoll: "삭제",
                 enterPassword: "비밀번호를 입력하세요:",
                 cancelButton: "취소",
                 confirmDeleteButton: "삭제",
@@ -282,12 +291,15 @@
         let deleteAttempts = 0;
 
         // Load FingerprintJS and generate a unique user ID
-        FingerprintJS.load().then(fp => {
-            fp.get().then(result => {
-                const userId = result.visitorId;
-                document.getElementById('user_id').value = userId;
+        const userIdInput = document.getElementById('user_id');
+        if (userIdInput) {
+            FingerprintJS.load().then(fp => {
+                fp.get().then(result => {
+                    const userId = result.visitorId;
+                    document.getElementById('user_id').value = userId;
+                });
             });
-        });
+        }
 
         document.getElementById('previewButton').addEventListener('click', function() {
             const pollId = "{{ poll_id }}";
@@ -339,27 +351,30 @@
                 });
         }
 
-        document.getElementById('vote-form').addEventListener('submit', function(event) {
-            event.preventDefault();
+        const voteForm = document.getElementById('vote-form');
+        if(voteForm){
+            document.getElementById('vote-form').addEventListener('submit', function(event) {
+                event.preventDefault();
 
-            const formData = new FormData(this);
+                const formData = new FormData(this);
 
-            fetch('{{ url_for("view_poll", poll_id=poll_id) }}', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    showToast(translations[localStorage.getItem('selectedLanguage') || 'ko'].toastVoteSuccess, 'success');
-                } else {
-                    showToast(translations[localStorage.getItem('selectedLanguage') || 'ko'].toastVoteFailed, 'danger');
-                }
-            })
-            .catch(error => {
-                showToast(translations[localStorage.getItem('selectedLanguage') || 'ko'].toastErrorOccurred, 'danger');
+                fetch('{{ url_for("view_poll", poll_id=poll_id) }}', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showToast(translations[localStorage.getItem('selectedLanguage') || 'ko'].toastVoteSuccess, 'success');
+                    } else {
+                        showToast(translations[localStorage.getItem('selectedLanguage') || 'ko'].toastVoteFailed, 'danger');
+                    }
+                })
+                .catch(error => {
+                    showToast(translations[localStorage.getItem('selectedLanguage') || 'ko'].toastErrorOccurred, 'danger');
+                });
             });
-        });
+        }
 
         document.getElementById('deleteButton').addEventListener('click', function() {
             if (deleteAttempts >= 3) {
