@@ -161,17 +161,17 @@
             const endDate = new Date(document.getElementById('end_date').value);
 
             if (!title) {
-                displayMessage('Please provide a title for the poll.', 'danger');
+                showToast('Please provide a title for the poll.', 'danger');
                 return;
             }
 
             if (options.length < 2) {
-                displayMessage('Please provide at least two options for the poll.', 'danger');
+                showToast('Please provide at least two options for the poll.', 'danger');
                 return;
             }
 
             if (endDate <= new Date()) {
-                displayMessage('End date must be in the future.', 'danger');
+                showToast('End date must be in the future.', 'danger');
                 return;
             }
 
@@ -185,28 +185,22 @@
             .then(data => {
                 if (data.success) {
                     displayLink(data.message);
-                    displayIframeCode(data.message); // Show iframe code with the generated link
+                    displayIframeCode(data.message); 
                     showToast('투표링크가 생성되었습니다.');
                 } else {
-                    displayMessage(data.message, 'danger');
+                    showToast(data.message, 'danger');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                displayMessage('An error occurred while creating the poll.', 'danger');
+                showToast('An error occurred while creating the poll.', 'danger');
             });
         });
-
-        function displayMessage(message, type) {
-            const messageContainer = document.getElementById('message-container');
-            messageContainer.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
-            messageContainer.style.display = 'block';
-        }
 
         function displayLink(link) {
             const messageContainer = document.getElementById('message-container');
             messageContainer.innerHTML = `
-                <span>투표 링크가 생성되었습니다. 링크를 공유해 보세요.</span> 
+                <span>투표 링크가 생성되었습니다.</span> 
                 <button class="btn btn-outline-secondary btn-sm" id="copy-link-btn">Copy Link</button>
                 <input type="text" class="form-control mt-2" id="poll-link" value="${link}" readonly>
             `;
@@ -217,6 +211,7 @@
                     showToast('링크가 클립보드에 복사되었습니다.');
                 }).catch(err => {
                     console.error('Failed to copy: ', err);
+                    showToast('Failed to copy link.', 'danger');
                 });
             });
         }
@@ -232,13 +227,17 @@
                     showToast('텍스트가 클립보드에 복사되었습니다.');
                 }).catch(err => {
                     console.error('Failed to copy: ', err);
+                    showToast('Failed to copy iframe code.', 'danger');
                 });
             });
         }
 
-        function showToast(message) {
+        function showToast(message, type = 'success') {
             const toastElement = document.getElementById('copyToast');
-            document.getElementById('toast-message').textContent = message;
+            const toastMessageElement = document.getElementById('toast-message');
+            toastMessageElement.textContent = message;
+            toastElement.classList.remove('text-bg-success', 'text-bg-danger');
+            toastElement.classList.add(`text-bg-${type}`);
             const toast = new bootstrap.Toast(toastElement);
             toast.show();
         }
