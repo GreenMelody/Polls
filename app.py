@@ -210,6 +210,11 @@ def filter_polls():
     start_date = data.get('start_date')
     end_date = data.get('end_date')
 
+    # 시작 날짜의 시간은 00:00:00으로 설정
+    start_date_with_time = f"{start_date} 00:00:00"
+    # 종료 날짜의 시간은 23:59:59로 설정
+    end_date_with_time = f"{end_date} 23:59:59"
+
     # DB에서 필터링된 투표 데이터 가져오기
     conn = sqlite3.connect('polls.db')
     cursor = conn.cursor()
@@ -218,7 +223,7 @@ def filter_polls():
         FROM polls 
         WHERE created_at BETWEEN ? AND ?
         ORDER BY created_at DESC
-    ''', (start_date, end_date))
+    ''', (start_date_with_time, end_date_with_time))
     polls = cursor.fetchall()
     conn.close()
 
