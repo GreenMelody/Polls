@@ -3,6 +3,7 @@ import sqlite3
 import hashlib
 import uuid
 from datetime import datetime, date
+from pytz import timezone
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
@@ -66,12 +67,16 @@ def create_poll():
     poll_id = generate_poll_id()
     hashed_password = hash_password(password)
 
+    # 한국 시간(KST)으로 생성 시각 설정
+    kst = timezone('Asia/Seoul')
+    created_at_kst = datetime.now(kst).strftime('%Y-%m-%d %H:%M:%S')
+
     conn = sqlite3.connect('app_data.db')  # 변경된 DB 경로
     cursor = conn.cursor()
     cursor.execute('''
-        INSERT INTO polls (id, title, options, password, end_date)
-        VALUES (?, ?, ?, ?, ?)
-    ''', (poll_id, title, str(options), hashed_password, end_date))
+        INSERT INTO polls (id, title, options, password, end_date, created_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+    ''', (poll_id, title, str(options), hashed_password, end_date, created_at_kst))
     conn.commit()
     conn.close()
 
