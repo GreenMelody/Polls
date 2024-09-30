@@ -4,6 +4,7 @@ import hashlib
 import uuid
 from datetime import datetime, date
 from pytz import timezone
+import json  # JSON 모듈 추가
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
@@ -71,12 +72,14 @@ def create_poll():
     kst = timezone('Asia/Seoul')
     created_at_kst = datetime.now(kst).strftime('%Y-%m-%d %H:%M:%S')
 
+    options_json = json.dumps(options)
+
     conn = sqlite3.connect('app_data.db')  # 변경된 DB 경로
     cursor = conn.cursor()
     cursor.execute('''
         INSERT INTO polls (id, title, options, password, end_date, created_at)
         VALUES (?, ?, ?, ?, ?, ?)
-    ''', (poll_id, title, str(options), hashed_password, end_date, created_at_kst))
+    ''', (poll_id, title, options_json, hashed_password, end_date, created_at_kst))
     conn.commit()
     conn.close()
 
@@ -99,8 +102,8 @@ def view_poll(poll_id):
     if not poll:
         return render_template('error.html')
 
-    title, options, end_date, created_at, poll_visit_count = poll
-    options = eval(options)
+    title, options_str, end_date, created_at, poll_visit_count = poll
+    options = json.loads(options_str)
 
     formatted_start_time = datetime.fromisoformat(created_at).strftime('%Y-%m-%d %H:%M:%S')
     formatted_end_time = datetime.fromisoformat(end_date).strftime('%Y-%m-%d %H:%M:%S')
@@ -116,8 +119,7 @@ def view_poll(poll_id):
             conn.close()
             return jsonify({'success': False, 'message': 'You have already voted.'})
         else:
-            cursor.execute('INSERT INTO votes (user_id, poll_id, option_index) VALUES (?, ?, ?)',
-                           (user_id, poll_id, option_index))
+            cursor.execute('INSERT INTO votes (user_id, poll_id, option_index) VALUES (?, ?, ?)', (user_id, poll_id, option_index))
             conn.commit()
             conn.close()
             return jsonify({'success': True, 'message': 'Vote recorded successfully!'})
@@ -147,7 +149,7 @@ def preview_poll(poll_id):
     if not poll:
         return jsonify({'success': False, 'message': 'Poll not found.'})
 
-    options = eval(poll[0])
+    options = json.loads(poll[0])
 
     conn = sqlite3.connect('app_data.db')
     cursor = conn.cursor()
