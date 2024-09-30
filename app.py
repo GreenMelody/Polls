@@ -16,7 +16,7 @@ def generate_poll_id():
     return str(uuid.uuid4())
 
 def update_visitor_count():
-    conn = sqlite3.connect('visitors.db')
+    conn = sqlite3.connect('app_data.db')
     cursor = conn.cursor()
     today = date.today().isoformat()
 
@@ -26,13 +26,13 @@ def update_visitor_count():
 
     # Update total count
     cursor.execute('UPDATE total_visits SET total_count = total_count + 1')
-    
+
     # Get today's and total counts
     cursor.execute('SELECT count FROM visits WHERE date = ?', (today,))
     today_count = cursor.fetchone()[0]
     cursor.execute('SELECT total_count FROM total_visits')
     total_count = cursor.fetchone()[0]
-    
+
     conn.commit()
     conn.close()
     
@@ -50,7 +50,6 @@ def create_poll():
     password = request.form.get('password')
     end_date = request.form.get('end_date')
 
-    # Validate input values
     if not title:
         return jsonify({'success': False, 'message': 'Please provide a title for the poll.'})
 
@@ -67,8 +66,7 @@ def create_poll():
     poll_id = generate_poll_id()
     hashed_password = hash_password(password)
 
-    # Store poll in database
-    conn = sqlite3.connect('polls.db')
+    conn = sqlite3.connect('app_data.db')  # 변경된 DB 경로
     cursor = conn.cursor()
     cursor.execute('''
         INSERT INTO polls (id, title, options, password, end_date)
@@ -77,13 +75,12 @@ def create_poll():
     conn.commit()
     conn.close()
 
-    # Return poll link
     poll_link = url_for('view_poll', poll_id=poll_id, _external=True)
     return jsonify({'success': True, 'message': poll_link})
 
 @app.route('/poll/<poll_id>', methods=['GET', 'POST'])
 def view_poll(poll_id):
-    conn = sqlite3.connect('polls.db')
+    conn = sqlite3.connect('app_data.db')
     cursor = conn.cursor()
     
     # Update poll visit count
@@ -106,7 +103,7 @@ def view_poll(poll_id):
     if request.method == 'POST':
         user_id = request.form.get('user_id')
         option_index = int(request.form.get('option'))
-        conn = sqlite3.connect('poll-result.db')
+        conn = sqlite3.connect('app_data.db')
         cursor = conn.cursor()
         cursor.execute('SELECT * FROM votes WHERE user_id = ? AND poll_id = ?', (user_id, poll_id))
         vote_exists = cursor.fetchone()
@@ -136,7 +133,7 @@ def view_poll(poll_id):
 
 @app.route('/preview/<poll_id>', methods=['GET'])
 def preview_poll(poll_id):
-    conn = sqlite3.connect('polls.db')
+    conn = sqlite3.connect('app_data.db')
     cursor = conn.cursor()
     cursor.execute('SELECT options FROM polls WHERE id = ?', (poll_id,))
     poll = cursor.fetchone()
@@ -147,7 +144,7 @@ def preview_poll(poll_id):
 
     options = eval(poll[0])
 
-    conn = sqlite3.connect('poll-result.db')
+    conn = sqlite3.connect('app_data.db')
     cursor = conn.cursor()
     cursor.execute('''
         SELECT option_index, COUNT(*) as vote_count
@@ -172,7 +169,7 @@ def delete_poll(poll_id):
     if not password or len(password) != 6 or not password.isdigit():
         return jsonify({'success': False, 'message': 'Invalid password format.'})
 
-    conn = sqlite3.connect('polls.db')
+    conn = sqlite3.connect('app_data.db')
     cursor = conn.cursor()
     cursor.execute('SELECT password FROM polls WHERE id = ?', (poll_id,))
     poll = cursor.fetchone()
@@ -191,7 +188,7 @@ def delete_poll(poll_id):
     conn.commit()
     conn.close()
 
-    conn = sqlite3.connect('poll-result.db')
+    conn = sqlite3.connect('app_data.db')
     cursor = conn.cursor()
     cursor.execute('DELETE FROM votes WHERE poll_id = ?', (poll_id,))
     conn.commit()
@@ -212,7 +209,7 @@ def filter_polls():
     start_date_with_time = f"{start_date} 00:00:00"
     end_date_with_time = f"{end_date} 23:59:59"
 
-    conn = sqlite3.connect('polls.db')
+    conn = sqlite3.connect('app_data.db')
     cursor = conn.cursor()
     cursor.execute('''
         SELECT id, title, created_at, end_date, visit_count 

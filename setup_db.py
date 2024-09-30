@@ -1,10 +1,12 @@
 # setup_db.py
 import sqlite3
 
-def setup_databases():
-    # Set up polls database
-    conn = sqlite3.connect('polls.db')
+def setup_database():
+    # Set up the database
+    conn = sqlite3.connect('app_data.db')
     cursor = conn.cursor()
+
+    # Polls table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS polls (
             id TEXT PRIMARY KEY,
@@ -13,15 +15,11 @@ def setup_databases():
             password TEXT, -- hashed password
             end_date DATETIME,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            visit_count INTEGER DEFAULT 0 -- 각 투표 페이지의 방문자 수
+            visit_count INTEGER DEFAULT 0 -- 투표 페이지 방문자 수
         )
     ''')
-    conn.commit()
-    conn.close()
 
-    # Set up poll results database
-    conn = sqlite3.connect('poll-result.db')
-    cursor = conn.cursor()
+    # Votes table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS votes (
             user_id TEXT,
@@ -31,12 +29,8 @@ def setup_databases():
             PRIMARY KEY (user_id, poll_id)
         )
     ''')
-    conn.commit()
-    conn.close()
 
-    # Set up visitors database for tracking daily and total visits
-    conn = sqlite3.connect('visitors.db')
-    cursor = conn.cursor()
+    # Visitors table for tracking daily and total visits
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS visits (
             date DATE PRIMARY KEY,
@@ -48,10 +42,12 @@ def setup_databases():
             total_count INTEGER DEFAULT 0
         )
     ''')
+
     # Initialize total visits if not present
     cursor.execute('INSERT INTO total_visits (total_count) SELECT 0 WHERE NOT EXISTS (SELECT 1 FROM total_visits)')
+
     conn.commit()
     conn.close()
 
 if __name__ == '__main__':
-    setup_databases()
+    setup_database()
