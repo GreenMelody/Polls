@@ -305,16 +305,23 @@
         function setDefaultEndDate() {
             const endDateInput = document.getElementById('end_date');
             const currentDate = new Date();
+            const minDate = new Date();
             const maxDate = new Date();
+
+            // maxDate는 현재로부터 15일 뒤
             maxDate.setDate(currentDate.getDate() + 15);
+
+            // endDateInput.value는 현재로부터 3일 뒤로 설정
             currentDate.setDate(currentDate.getDate() + 3);
             currentDate.setHours(23, 59, 59);
 
-            const minDateFormatted = formatDateTime(currentDate);
+            const minDateFormatted = formatDateTime(minDate); // 최소 선택 가능한 날짜는 현재 시간
             const maxDateFormatted = formatDateTime(maxDate);
-            endDateInput.value = minDateFormatted;
-            endDateInput.min = minDateFormatted;
-            endDateInput.max = maxDateFormatted;
+            const endDateFormatted = formatDateTime(currentDate); // 기본 종료 날짜는 3일 뒤
+
+            endDateInput.value = endDateFormatted; // 종료 날짜 기본값을 3일 뒤로 설정
+            endDateInput.min = minDateFormatted;   // 최소값은 현재 시간으로 설정
+            endDateInput.max = maxDateFormatted;   // 최대값은 15일 뒤로 설정
         }
 
         function formatDateTime(date) {
