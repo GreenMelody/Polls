@@ -185,7 +185,6 @@
                             <div id="resultsContainer"></div>
                         {% else %}
                             <form id="vote-form">
-                                <input type="hidden" id="user_id" name="user_id">
                                 <div class="mb-3">
                                     {% for option in options %}
                                         <div class="form-check">
@@ -344,16 +343,40 @@
         let deleteAttempts = 0;
 
         // Load FingerprintJS and generate a unique user ID
-        const userIdInput = document.getElementById('user_id');
-        if (userIdInput) {
-            FingerprintJS.load().then(fp => {
-                fp.get().then(result => {
-                    const userId = result.visitorId;
-                    document.getElementById('user_id').value = userId;
-                });
-            });
+        function getFingerprint() {
+            return FingerprintJS.load()
+                .then(fp => fp.get())
+                .then(result => result.visitorId);
         }
 
+        // 투표하기 버튼 누를 때 사용자 ID와 폼 데이터 전송
+        document.getElementById('vote-form').addEventListener('submit', function (event) {
+            event.preventDefault();
+
+            getFingerprint().then(userId => {
+                const formData = new FormData(this);
+                formData.append('user_id', userId); // 사용자 ID 추가
+
+                fetch('{{ url_for("view_poll", poll_id=poll_id) }}', {
+                    method: 'POST',
+                    body: formData
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        const lang = localStorage.getItem('selectedLanguage') || 'ko';
+                        if (data.success) {
+                            showToast(translations[lang].toastVoteSuccess, 'success');
+                        } else {
+                            showToast(translations[lang].toastVoteFailed, 'danger');
+                        }
+                    })
+                    .catch(error => {
+                        showToast(translations[localStorage.getItem('selectedLanguage') || 'ko'].toastErrorOccurred, 'danger');
+                    });
+            });
+        });
+
+        // 결과 미리보기
         document.getElementById('previewButton').addEventListener('click', function() {
             const pollId = "{{ poll_id }}";
             const resultsContainer = document.getElementById('resultsContainer');
@@ -408,31 +431,7 @@
                 });
         }
 
-        const voteForm = document.getElementById('vote-form');
-        if (voteForm) {
-            document.getElementById('vote-form').addEventListener('submit', function (event) {
-                event.preventDefault();
-
-                const formData = new FormData(this);
-
-                fetch('{{ url_for("view_poll", poll_id=poll_id) }}', {
-                    method: 'POST',
-                    body: formData
-                })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            showToast(translations[localStorage.getItem('selectedLanguage') || 'ko'].toastVoteSuccess, 'success');
-                        } else {
-                            showToast(translations[localStorage.getItem('selectedLanguage') || 'ko'].toastVoteFailed, 'danger');
-                        }
-                    })
-                    .catch(error => {
-                        showToast(translations[localStorage.getItem('selectedLanguage') || 'ko'].toastErrorOccurred, 'danger');
-                    });
-            });
-        }
-
+        // 투표 삭제 로직
         document.getElementById('deleteButton').addEventListener('click', function() {
             if (deleteAttempts >= 3) {
                 showToast(translations[localStorage.getItem('selectedLanguage') || 'ko'].toastRetryLimit, 'danger');
