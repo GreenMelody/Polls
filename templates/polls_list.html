@@ -89,6 +89,7 @@
                     <th>Created Date</th>
                     <th>End Date</th>
                     <th>Is Expired</th>
+                    <th>Hits</th>
                     <th>Link</th>
                 </tr>
             </thead>
@@ -156,6 +157,7 @@
                         <td>${poll.created_date}</td>
                         <td>${poll.end_date}</td>
                         <td>${poll.is_expired}</td>
+                        <td>${poll.hits}</td>
                         <td><a href="${poll.link}" target="_blank">View Poll</a></td>
                     </tr>`;
                     tableBody.insertAdjacentHTML('beforeend', row);
