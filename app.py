@@ -201,16 +201,27 @@ def delete_poll(poll_id):
 
 @app.route('/polls')
 def polls_list():
-    today_count, total_count = update_visitor_count()
-    
-    # DB에서 모든 투표 데이터를 가져오기
+    # 초기 페이지 로드 시 템플릿 렌더링
+    return render_template('polls_list.html')
+
+@app.route('/polls/filter', methods=['POST'])
+def filter_polls():
+    data = request.json
+    start_date = data.get('start_date')
+    end_date = data.get('end_date')
+
+    # DB에서 필터링된 투표 데이터 가져오기
     conn = sqlite3.connect('polls.db')
     cursor = conn.cursor()
-    cursor.execute('SELECT id, title, created_at, end_date FROM polls ORDER BY created_at DESC')
+    cursor.execute('''
+        SELECT id, title, created_at, end_date 
+        FROM polls 
+        WHERE created_at BETWEEN ? AND ?
+        ORDER BY created_at DESC
+    ''', (start_date, end_date))
     polls = cursor.fetchall()
     conn.close()
-    
-    # 투표 데이터를 가공하여 Is Expired와 Link 추가
+
     formatted_polls = []
     for index, (poll_id, title, created_at, end_date) in enumerate(polls, start=1):
         is_expired = datetime.now() > datetime.fromisoformat(end_date)
@@ -218,12 +229,12 @@ def polls_list():
             'index': index,
             'title': title,
             'created_date': created_at,
-            'end_date': datetime.fromisoformat(end_date),
+            'end_date': datetime.fromisoformat(end_date).strftime('%Y-%m-%d'),
             'is_expired': 'Yes' if is_expired else 'No',
             'link': url_for('view_poll', poll_id=poll_id, _external=True)
         })
-    
-    return render_template('polls_list.html', today_count=today_count, total_count=total_count, polls=formatted_polls)
+
+    return jsonify(formatted_polls)
 
 if __name__ == '__main__':
     app.run(debug=True)
