@@ -42,12 +42,22 @@
         .filter-container {
             display: flex;
             gap: 10px;
-            margin-bottom: 15px;
             align-items: center;
         }
-        .search-input {
-            margin-bottom: 15px;
+        .filter-container .form-control, .filter-container .btn {
+            flex: 0 0 auto;  /* Ensure form controls don't stretch */
+        }
+        .filter-container .form-control {
+            width: 150px;  /* Set a fixed width for date inputs */
+        }
+        .search-container {
+            display: flex;
             width: 100%;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .search-input {
+            flex: 1;  /* Make search input take remaining space */
             padding: 8px;
             border: 1px solid #ccc;
             border-radius: 5px;
@@ -57,14 +67,20 @@
 <body>
     <div class="container">
         <h1 class="text-center mb-4">Polls List</h1>
-        <div class="filter-container">
-            <label for="startDate">Start:</label>
-            <input type="date" id="startDate" class="form-control">
-            <label for="endDate">End:</label>
-            <input type="date" id="endDate" class="form-control">
-            <button class="btn btn-primary" id="searchButton">Search</button>
+        
+        <!-- Search, Date Filters, and Button on the same line -->
+        <div class="search-container">
+            <input type="text" id="searchInput" class="search-input" placeholder="Search polls by title..." onkeyup="searchTable()">
+            
+            <div class="filter-container">
+                <label for="startDate">Start:</label>
+                <input type="date" id="startDate" class="form-control">
+                <label for="endDate">End:</label>
+                <input type="date" id="endDate" class="form-control">
+                <button class="btn btn-primary" id="searchButton">Search</button>
+            </div>
         </div>
-        <input type="text" id="searchInput" class="search-input" placeholder="Search polls by title..." onkeyup="searchTable()">
+
         <table class="table table-striped" id="pollTable">
             <thead>
                 <tr>
