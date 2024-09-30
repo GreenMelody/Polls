@@ -110,7 +110,10 @@
             
             endDateInput.value = today.toISOString().split('T')[0];
             startDateInput.value = sevenDaysAgo.toISOString().split('T')[0];
-            
+
+            // 페이지가 로드되면 처음 한 번 search 버튼을 눌러 필터링을 실행
+            filterPolls();
+
             // 검색 버튼 클릭 시 이벤트 처리
             document.getElementById('searchButton').addEventListener('click', function () {
                 filterPolls();
