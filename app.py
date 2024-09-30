@@ -91,8 +91,9 @@ def view_poll(poll_id):
     conn = sqlite3.connect('app_data.db')
     cursor = conn.cursor()
     
-    # Update poll visit count
-    cursor.execute('UPDATE polls SET visit_count = visit_count + 1 WHERE id = ?', (poll_id,))
+    if request.method == 'GET':
+        # Update poll visit count only on GET request
+        cursor.execute('UPDATE polls SET visit_count = visit_count + 1 WHERE id = ?', (poll_id,))
     
     cursor.execute('SELECT title, options, end_date, created_at, visit_count FROM polls WHERE id = ?', (poll_id,))
     poll = cursor.fetchone()
