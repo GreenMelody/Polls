@@ -2,10 +2,11 @@ from flask import Flask, request, render_template, url_for, jsonify, escape
 import sqlite3
 import hashlib
 import uuid
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from pytz import timezone
 import json
 import re
+from apscheduler.schedulers.background import BackgroundScheduler
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
@@ -45,14 +46,11 @@ def update_visitor_count():
 
 # 유효성 검사 함수 (제어 문자, 특수 공백 등을 필터링하고 길이 제한 추가)
 def is_valid_text(input_text):
-    # 제어 문자, 특수 공백 등을 필터링하는 정규 표현식
     control_char_regex = r'[\x00-\x1F\x7F\u200B-\u200D\uFEFF\u180E\u3164]'
     
-    # 텍스트 길이 제한 추가 (최대 300자)
     if len(input_text.strip()) > 300:
         return False
-    
-    # 공백으로만 구성된 텍스트 또는 필터링해야 할 문자가 없는지 확인
+
     return not bool(re.search(control_char_regex, input_text.strip())) and bool(input_text.strip())
 
 @app.route('/')
@@ -67,11 +65,9 @@ def create_poll():
     password = request.form.get('password')
     end_date = request.form.get('end_date')
 
-    # 제목 유효성 확인 (길이 제한 포함)
     if not title or not is_valid_text(title):
         return jsonify({'success': False, 'message': 'Please provide a valid title for the poll (maximum 300 characters).'})
 
-    # 옵션 유효성 확인 (길이 제한 포함)
     valid_options = [option for option in options if is_valid_text(option.strip())]
     if len(valid_options) < 2:
         return jsonify({'success': False, 'message': 'Please provide at least two valid options (maximum 300 characters).'})
@@ -86,20 +82,18 @@ def create_poll():
     poll_id = generate_poll_id()
     hashed_password = hash_password(password)
 
-    # 한국 시간(KST)으로 생성 시각 설정
     kst = timezone('Asia/Seoul')
     created_at_kst = datetime.now(kst).strftime('%Y-%m-%d %H:%M:%S')
 
     options_json = json.dumps(valid_options)
 
-    conn = sqlite3.connect('app_data.db')  # 변경된 DB 경로
+    conn = sqlite3.connect('app_data.db')
     cursor = conn.cursor()
     cursor.execute('''
         INSERT INTO polls (id, title, options, password, end_date, created_at)
         VALUES (?, ?, ?, ?, ?, ?)
     ''', (poll_id, title, options_json, hashed_password, end_date, created_at_kst))
     
-    # Update the total polls count
     cursor.execute('UPDATE polls_count SET total_polls = total_polls + 1')
 
     conn.commit()
@@ -262,6 +256,52 @@ def filter_polls():
         })
 
     return jsonify(formatted_polls)
+
+# 매일 새벽 3시에 만료된 투표와 관련된 데이터 삭제
+def delete_expired_polls():
+    conn = sqlite3.connect('app_data.db')
+    cursor = conn.cursor()
+
+    # 15일이 지난 만료된 투표 삭제
+    threshold_date = (datetime.now() - timedelta(days=15)).isoformat()
+
+    # 삭제할 투표 ID 조회
+    cursor.execute('SELECT id FROM polls WHERE end_date < ?', (threshold_date,))
+    expired_polls = cursor.fetchall()
+
+    # 만료된 투표 및 관련 데이터 삭제
+    for poll_id in expired_polls:
+        poll_id = poll_id[0]
+        cursor.execute('DELETE FROM polls WHERE id = ?', (poll_id,))
+        cursor.execute('DELETE FROM votes WHERE poll_id = ?', (poll_id,))
+    
+    conn.commit()
+    conn.close()
+    print(f"Deleted expired polls and related data older than {threshold_date}")
+
+# 스케줄러 설정
+scheduler = BackgroundScheduler(timezone="Asia/Seoul")
+scheduler.add_job(func=delete_expired_polls, trigger='cron', hour=3, minute=0)
+scheduler.start()
+
+@app.route('/scheduler/jobs', methods=['GET'])
+def get_scheduled_jobs():
+    """스케줄러에 등록된 작업 확인"""
+    jobs = scheduler.get_jobs()
+    jobs_info = []
+    for job in jobs:
+        jobs_info.append({
+            'id': job.id,
+            'next_run_time': str(job.next_run_time),
+            'trigger': str(job.trigger)
+        })
+    return jsonify(jobs_info)
+
+# 앱 종료 시 스케줄러 종료
+@app.before_first_request
+def initialize_scheduler():
+    import atexit
+    atexit.register(lambda: scheduler.shutdown())
 
 if __name__ == '__main__':
     app.run(debug=True)
