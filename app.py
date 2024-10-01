@@ -1,10 +1,11 @@
-from flask import Flask, request, render_template, url_for, jsonify
+from flask import Flask, request, render_template, url_for, jsonify, escape
 import sqlite3
 import hashlib
 import uuid
 from datetime import datetime, date
 from pytz import timezone
-import json  # JSON 모듈 추가
+import json
+import re
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
@@ -40,6 +41,20 @@ def update_visitor_count():
     
     return today_count, total_count
 
+# 유효성 검사 함수 (제어 문자, 특수 공백, 이모지 등을 필터링)
+def is_valid_text(input_text):
+    # 제어 문자, 특수 공백, 이모지 등을 필터링하는 정규 표현식
+    control_char_regex = r'[\x00-\x1F\x7F\u200B-\u200D\uFEFF\u180E]'
+    emoji_pattern = re.compile("["
+        u"\U0001F600-\U0001F64F"  # 이모지 범위
+        u"\U0001F300-\U0001F5FF"
+        u"\U0001F680-\U0001F6FF"
+        u"\U0001F700-\U0001F77F"
+        "]+", flags=re.UNICODE)
+    
+    # 공백으로만 구성된 텍스트 또는 필터링해야 할 문자가 없는지 확인
+    return not bool(re.search(control_char_regex, input_text.strip())) and not bool(emoji_pattern.search(input_text)) and bool(input_text.strip())
+
 @app.route('/')
 def index():
     today_count, total_count = update_visitor_count()
@@ -47,16 +62,19 @@ def index():
 
 @app.route('/create_poll', methods=['POST'])
 def create_poll():
-    title = request.form.get('title')
-    options = request.form.getlist('options[]')
+    title = escape(request.form.get('title'))  # XSS 방지를 위한 HTML 이스케이프 처리
+    options = [escape(option) for option in request.form.getlist('options[]')]  # 옵션에 대해 이스케이프 처리
     password = request.form.get('password')
     end_date = request.form.get('end_date')
 
-    if not title:
-        return jsonify({'success': False, 'message': 'Please provide a title for the poll.'})
+    # 제목 유효성 확인
+    if not title or not is_valid_text(title):
+        return jsonify({'success': False, 'message': 'Please provide a valid title for the poll.'})
 
-    if len([option for option in options if option.strip()]) < 2:
-        return jsonify({'success': False, 'message': 'Please provide at least two options for the poll.'})
+    # 옵션 유효성 확인
+    valid_options = [option for option in options if is_valid_text(option.strip())]
+    if len(valid_options) < 2:
+        return jsonify({'success': False, 'message': 'Please provide at least two valid options for the poll.'})
 
     try:
         end_date_dt = datetime.fromisoformat(end_date)
@@ -72,7 +90,7 @@ def create_poll():
     kst = timezone('Asia/Seoul')
     created_at_kst = datetime.now(kst).strftime('%Y-%m-%d %H:%M:%S')
 
-    options_json = json.dumps(options)
+    options_json = json.dumps(valid_options)
 
     conn = sqlite3.connect('app_data.db')  # 변경된 DB 경로
     cursor = conn.cursor()
@@ -130,9 +148,9 @@ def view_poll(poll_id):
 
     return render_template(
         'poll.html',
-        title=title,
-        options=options,
-        poll_id=poll_id,
+        title=escape(title),  # 제목 이스케이프 처리
+        options=[escape(option) for option in options],  # 옵션에 대해 이스케이프 처리
+        poll_id=escape(poll_id),  # poll_id 이스케이프 처리
         is_expired=is_expired,
         start_time=formatted_start_time,
         end_time=formatted_end_time,
@@ -163,9 +181,7 @@ def preview_poll(poll_id):
     vote_results = cursor.fetchall()
     conn.close()
 
-    results = [{'option_index': i, 'option_text': options[i], 'vote_count': 0} for i in range(len(options))]
-    for vote in vote_results:
-        results[vote[0]]['vote_count'] = vote[1]
+    results = [{'option_index': i, 'option_text': escape(options[i]), 'vote_count': vote[1]} for i, vote in enumerate(vote_results)]
 
     return jsonify(results)
 
@@ -233,7 +249,7 @@ def filter_polls():
         is_expired = datetime.now() > datetime.fromisoformat(end_date)
         formatted_polls.append({
             'index': index,
-            'title': title,
+            'title': escape(title),  # 제목 이스케이프 처리
             'created_date': created_at,
             'end_date': datetime.fromisoformat(end_date).strftime('%Y-%m-%d'),
             'is_expired': 'Yes' if is_expired else 'No',
