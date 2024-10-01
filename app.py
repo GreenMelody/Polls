@@ -44,16 +44,10 @@ def update_visitor_count():
 # 유효성 검사 함수 (제어 문자, 특수 공백, 이모지 등을 필터링)
 def is_valid_text(input_text):
     # 제어 문자, 특수 공백, 이모지 등을 필터링하는 정규 표현식
-    control_char_regex = r'[\x00-\x1F\x7F\u200B-\u200D\uFEFF\u180E]'
-    emoji_pattern = re.compile("["
-        u"\U0001F600-\U0001F64F"  # 이모지 범위
-        u"\U0001F300-\U0001F5FF"
-        u"\U0001F680-\U0001F6FF"
-        u"\U0001F700-\U0001F77F"
-        "]+", flags=re.UNICODE)
+    control_char_regex = r'[\x00-\x1F\x7F\u200B-\u200D\uFEFF\u180E\u3164]'
     
     # 공백으로만 구성된 텍스트 또는 필터링해야 할 문자가 없는지 확인
-    return not bool(re.search(control_char_regex, input_text.strip())) and not bool(emoji_pattern.search(input_text)) and bool(input_text.strip())
+    return not bool(re.search(control_char_regex, input_text.strip())) and bool(input_text.strip())
 
 @app.route('/')
 def index():
