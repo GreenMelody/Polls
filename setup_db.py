@@ -46,6 +46,16 @@ def setup_database():
     # Initialize total visits if not present
     cursor.execute('INSERT INTO total_visits (total_count) SELECT 0 WHERE NOT EXISTS (SELECT 1 FROM total_visits)')
 
+    # Polls count table for tracking total number of polls created
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS polls_count (
+            total_polls INTEGER DEFAULT 0
+        )
+    ''')
+
+    # Initialize polls count if not present
+    cursor.execute('INSERT INTO polls_count (total_polls) SELECT 0 WHERE NOT EXISTS (SELECT 1 FROM polls_count)')
+
     conn.commit()
     conn.close()
 

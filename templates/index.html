@@ -103,6 +103,14 @@
             border-bottom-right-radius: 5px;
             font-size: 0.85rem;
         }
+        .visit-counter .total-polls {
+            background-color: #5dd1ff;
+            color: white;
+            padding: 1px 8px;
+            border-top-right-radius: 5px;
+            border-bottom-right-radius: 5px;
+            font-size: 0.85rem;
+        }
         .btn-selected {
             background-color: #4a90e2;
             color: white;
@@ -127,7 +135,9 @@
     <div class="top-bar">
         <div class="visit-counter">
             <span class="hits">hits</span>
-            <span class="count">{{ today_count }} / {{ total_count }}</span>
+            <span class="count">{{ today_count }} / {{ total_count }}</span>&nbsp;
+            <span class="hits">polls</span>
+            <span class="total-polls"> {{ total_polls }}</span>
         </div>
         <div class="language-selector">
             <button id="lang-en" class="btn btn-outline-secondary btn-sm">English</button>

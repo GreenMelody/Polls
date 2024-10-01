@@ -35,11 +35,13 @@ def update_visitor_count():
     today_count = cursor.fetchone()[0]
     cursor.execute('SELECT total_count FROM total_visits')
     total_count = cursor.fetchone()[0]
+    cursor.execute('SELECT total_polls FROM polls_count')
+    total_polls = cursor.fetchone()[0]
 
     conn.commit()
     conn.close()
     
-    return today_count, total_count
+    return today_count, total_count, total_polls
 
 # 유효성 검사 함수 (제어 문자, 특수 공백 등을 필터링하고 길이 제한 추가)
 def is_valid_text(input_text):
@@ -55,8 +57,8 @@ def is_valid_text(input_text):
 
 @app.route('/')
 def index():
-    today_count, total_count = update_visitor_count()
-    return render_template('index.html', today_count=today_count, total_count=total_count)
+    today_count, total_count, total_polls = update_visitor_count()
+    return render_template('index.html', today_count=today_count, total_count=total_count, total_polls=total_polls)
 
 @app.route('/create_poll', methods=['POST'])
 def create_poll():
@@ -96,6 +98,10 @@ def create_poll():
         INSERT INTO polls (id, title, options, password, end_date, created_at)
         VALUES (?, ?, ?, ?, ?, ?)
     ''', (poll_id, title, options_json, hashed_password, end_date, created_at_kst))
+    
+    # Update the total polls count
+    cursor.execute('UPDATE polls_count SET total_polls = total_polls + 1')
+
     conn.commit()
     conn.close()
 
