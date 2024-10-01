@@ -1,3 +1,6 @@
+import os
+import logging
+from logging.handlers import TimedRotatingFileHandler
 from flask import Flask, request, render_template, url_for, jsonify, escape
 import sqlite3
 import hashlib
@@ -10,6 +13,30 @@ from apscheduler.schedulers.background import BackgroundScheduler
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
+
+# Logging 설정
+def setup_logging():
+    if not os.path.exists('logs'):
+        os.makedirs('logs')
+
+    # 로그 포맷 지정
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+
+    # 콘솔 핸들러 설정
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(formatter)
+    
+    # 파일 핸들러 설정 (날짜별로 로그를 저장)
+    file_handler = TimedRotatingFileHandler('logs/app.log', when="midnight", interval=1, backupCount=60, encoding="utf-8")
+    file_handler.setFormatter(formatter)
+    file_handler.suffix = "%Y-%m-%d"
+
+    # Logger 설정
+    app.logger.setLevel(logging.DEBUG)
+    app.logger.addHandler(console_handler)
+    app.logger.addHandler(file_handler)
+
+setup_logging()
 
 # Utility function to hash passwords
 def hash_password(password):
@@ -24,14 +51,10 @@ def update_visitor_count():
     cursor = conn.cursor()
     today = date.today().isoformat()
 
-    # Update today's count
     cursor.execute('INSERT OR IGNORE INTO visits (date, count) VALUES (?, 0)', (today,))
     cursor.execute('UPDATE visits SET count = count + 1 WHERE date = ?', (today,))
 
-    # Update total count
     cursor.execute('UPDATE total_visits SET total_count = total_count + 1')
-
-    # Get today's and total counts
     cursor.execute('SELECT count FROM visits WHERE date = ?', (today,))
     today_count = cursor.fetchone()[0]
     cursor.execute('SELECT total_count FROM total_visits')
@@ -41,16 +64,17 @@ def update_visitor_count():
 
     conn.commit()
     conn.close()
+
+    app.logger.debug(f"Visitor counts updated: Today: {today_count}, Total: {total_count}, Total Polls: {total_polls}")
     
     return today_count, total_count, total_polls
 
-# 유효성 검사 함수 (제어 문자, 특수 공백 등을 필터링하고 길이 제한 추가)
+# 유효성 검사 함수
 def is_valid_text(input_text):
     control_char_regex = r'[\x00-\x1F\x7F\u200B-\u200D\uFEFF\u180E\u3164]'
-    
     if len(input_text.strip()) > 300:
+        app.logger.warning(f"Invalid input length: {len(input_text.strip())}")
         return False
-
     return not bool(re.search(control_char_regex, input_text.strip())) and bool(input_text.strip())
 
 @app.route('/')
@@ -60,23 +84,27 @@ def index():
 
 @app.route('/create_poll', methods=['POST'])
 def create_poll():
-    title = escape(request.form.get('title'))  # XSS 방지를 위한 HTML 이스케이프 처리
-    options = [escape(option) for option in request.form.getlist('options[]')]  # 옵션에 대해 이스케이프 처리
+    title = escape(request.form.get('title'))
+    options = [escape(option) for option in request.form.getlist('options[]')]
     password = request.form.get('password')
     end_date = request.form.get('end_date')
 
     if not title or not is_valid_text(title):
+        app.logger.error("Invalid poll title or options.")
         return jsonify({'success': False, 'message': 'Please provide a valid title for the poll (maximum 300 characters).'})
 
     valid_options = [option for option in options if is_valid_text(option.strip())]
     if len(valid_options) < 2:
+        app.logger.error("Insufficient valid options provided.")
         return jsonify({'success': False, 'message': 'Please provide at least two valid options (maximum 300 characters).'})
 
     try:
         end_date_dt = datetime.fromisoformat(end_date)
         if end_date_dt <= datetime.now():
+            app.logger.error("Invalid end date provided.")
             return jsonify({'success': False, 'message': 'End date must be in the future.'})
     except ValueError:
+        app.logger.error("Invalid date format.")
         return jsonify({'success': False, 'message': 'Invalid date format.'})
 
     poll_id = generate_poll_id()
@@ -93,12 +121,14 @@ def create_poll():
         INSERT INTO polls (id, title, options, password, end_date, created_at)
         VALUES (?, ?, ?, ?, ?, ?)
     ''', (poll_id, title, options_json, hashed_password, end_date, created_at_kst))
-    
+
     cursor.execute('UPDATE polls_count SET total_polls = total_polls + 1')
 
     conn.commit()
     conn.close()
 
+    app.logger.info(f"Poll created: ID={poll_id}, Title={title}")
+    
     poll_link = url_for('view_poll', poll_id=poll_id, _external=True)
     return jsonify({'success': True, 'message': poll_link})
 
@@ -108,7 +138,6 @@ def view_poll(poll_id):
     cursor = conn.cursor()
     
     if request.method == 'GET':
-        # Update poll visit count only on GET request
         cursor.execute('UPDATE polls SET visit_count = visit_count + 1 WHERE id = ?', (poll_id,))
     
     cursor.execute('SELECT title, options, end_date, created_at, visit_count FROM polls WHERE id = ?', (poll_id,))
@@ -146,9 +175,9 @@ def view_poll(poll_id):
 
     return render_template(
         'poll.html',
-        title=escape(title),  # 제목 이스케이프 처리
-        options=[escape(option) for option in options],  # 옵션에 대해 이스케이프 처리
-        poll_id=escape(poll_id),  # poll_id 이스케이프 처리
+        title=escape(title),
+        options=[escape(option) for option in options],
+        poll_id=escape(poll_id),
         is_expired=is_expired,
         start_time=formatted_start_time,
         end_time=formatted_end_time,
@@ -216,6 +245,7 @@ def delete_poll(poll_id):
     conn.commit()
     conn.close()
 
+    app.logger.info(f"Poll deleted: ID={poll_id}")
     return jsonify({'success': True, 'message': 'Poll deleted successfully.'})
 
 @app.route('/polls')
@@ -247,7 +277,7 @@ def filter_polls():
         is_expired = datetime.now() > datetime.fromisoformat(end_date)
         formatted_polls.append({
             'index': index,
-            'title': escape(title),  # 제목 이스케이프 처리
+            'title': escape(title),
             'created_date': created_at,
             'end_date': datetime.fromisoformat(end_date).strftime('%Y-%m-%d'),
             'is_expired': 'Yes' if is_expired else 'No',
@@ -262,14 +292,11 @@ def delete_expired_polls():
     conn = sqlite3.connect('app_data.db')
     cursor = conn.cursor()
 
-    # 15일이 지난 만료된 투표 삭제
     threshold_date = (datetime.now() - timedelta(days=15)).isoformat()
 
-    # 삭제할 투표 ID 조회
     cursor.execute('SELECT id FROM polls WHERE end_date < ?', (threshold_date,))
     expired_polls = cursor.fetchall()
 
-    # 만료된 투표 및 관련 데이터 삭제
     for poll_id in expired_polls:
         poll_id = poll_id[0]
         cursor.execute('DELETE FROM polls WHERE id = ?', (poll_id,))
@@ -277,7 +304,8 @@ def delete_expired_polls():
     
     conn.commit()
     conn.close()
-    print(f"Deleted expired polls and related data older than {threshold_date}")
+
+    app.logger.info(f"Deleted expired polls older than {threshold_date}")
 
 # 스케줄러 설정
 scheduler = BackgroundScheduler(timezone="Asia/Seoul")
@@ -286,7 +314,6 @@ scheduler.start()
 
 @app.route('/scheduler/jobs', methods=['GET'])
 def get_scheduled_jobs():
-    """스케줄러에 등록된 작업 확인"""
     jobs = scheduler.get_jobs()
     jobs_info = []
     for job in jobs:
@@ -295,9 +322,9 @@ def get_scheduled_jobs():
             'next_run_time': str(job.next_run_time),
             'trigger': str(job.trigger)
         })
+    app.logger.info("Fetched scheduler jobs.")
     return jsonify(jobs_info)
 
-# 앱 종료 시 스케줄러 종료
 @app.before_first_request
 def initialize_scheduler():
     import atexit
