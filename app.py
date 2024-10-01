@@ -41,10 +41,14 @@ def update_visitor_count():
     
     return today_count, total_count
 
-# 유효성 검사 함수 (제어 문자, 특수 공백, 이모지 등을 필터링)
+# 유효성 검사 함수 (제어 문자, 특수 공백 등을 필터링하고 길이 제한 추가)
 def is_valid_text(input_text):
-    # 제어 문자, 특수 공백, 이모지 등을 필터링하는 정규 표현식
+    # 제어 문자, 특수 공백 등을 필터링하는 정규 표현식
     control_char_regex = r'[\x00-\x1F\x7F\u200B-\u200D\uFEFF\u180E\u3164]'
+    
+    # 텍스트 길이 제한 추가 (최대 300자)
+    if len(input_text.strip()) > 300:
+        return False
     
     # 공백으로만 구성된 텍스트 또는 필터링해야 할 문자가 없는지 확인
     return not bool(re.search(control_char_regex, input_text.strip())) and bool(input_text.strip())
@@ -61,14 +65,14 @@ def create_poll():
     password = request.form.get('password')
     end_date = request.form.get('end_date')
 
-    # 제목 유효성 확인
+    # 제목 유효성 확인 (길이 제한 포함)
     if not title or not is_valid_text(title):
-        return jsonify({'success': False, 'message': 'Please provide a valid title for the poll.'})
+        return jsonify({'success': False, 'message': 'Please provide a valid title for the poll (maximum 300 characters).'})
 
-    # 옵션 유효성 확인
+    # 옵션 유효성 확인 (길이 제한 포함)
     valid_options = [option for option in options if is_valid_text(option.strip())]
     if len(valid_options) < 2:
-        return jsonify({'success': False, 'message': 'Please provide at least two valid options for the poll.'})
+        return jsonify({'success': False, 'message': 'Please provide at least two valid options (maximum 300 characters).'})
 
     try:
         end_date_dt = datetime.fromisoformat(end_date)
