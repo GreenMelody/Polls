@@ -53,7 +53,7 @@
             border: 1px solid #c3e6cb;
             margin-top: 20px;
         }
-        #iframe-container {
+        #embed-container {
             display: none;
             background-color: #e3f7e9;
             padding: 15px;
@@ -174,11 +174,11 @@
 
         <hr>
 
-        <!-- Iframe Container -->
-        <div id="iframe-container">
-            <span id="iframe-instructions"></span>
-            <button class="btn btn-outline-secondary btn-sm" id="copy-iframe-btn">Copy text</button>
-            <textarea id="iframe-code" class="form-control mt-2" rows="3" readonly></textarea>
+        <!-- Embed Container -->
+        <div id="embed-container">
+            <span id="embed-instructions"></span>
+            <button class="btn btn-outline-secondary btn-sm" id="copy-embed-btn">Copy text</button>
+            <textarea id="embed-code" class="form-control mt-2" rows="3" readonly></textarea>
         </div>
 
         <div id="message-container" style="display: none;"></div>
@@ -223,7 +223,7 @@
                 footerMessage: `This poll page does not store any personal information other than the poll title, content, date, and vote count.
                 A unique ID is assigned based on the user's device settings, but it does not identify the user.
                 It does not fully guarantee one person, one vote.`,
-                iframeInstructions: "Paste the code below into the HTML tab of the board.",
+                embedInstructions: "Paste the code below into the HTML tab of the board.",
                 createLinkInstructions: "Poll link created successfully."
             },
             ko: {
@@ -246,7 +246,7 @@
                 footerMessage: `해당 투표 페이지는 투표 제목, 내용, 날짜 및 투표 수 외에 어떠한 개인 정보도 저장하지 않습니다.
                 투표 시 사용자 기기의 설정을 조합하여 고유한 ID가 부여되지만, 이를 통해 사용자를 특정할 수는 없습니다.
                 1인 1표를 완벽하게 보장하지는 않습니다.`,
-                iframeInstructions: "아래 코드를 게시판의 HTML 탭에 붙여넣으세요.",
+                embedInstructions: "아래 코드를 게시판의 HTML 탭에 붙여넣으세요.",
                 createLinkInstructions: "투표링크가 생성되었습니다."
             }
         };
@@ -261,7 +261,7 @@
             document.getElementById('end-date-label').textContent = elements.endDate;
             document.querySelector('button[type="submit"]').textContent = elements.submit;
             document.getElementById('footer-message').textContent = elements.footerMessage;
-            document.getElementById('iframe-instructions').textContent = elements.iframeInstructions;
+            document.getElementById('embed-instructions').textContent = elements.embedInstructions;
 
             const createLinkInstructions = document.getElementById('create-link-instructions');
             if (createLinkInstructions) {
@@ -403,7 +403,7 @@
             .then(data => {
                 if (data.success) {
                     displayLink(data.message);
-                    displayIframeCode(data.message);
+                    displayEmbedCode(data.message);
                     showToast(translations[localStorage.getItem('selectedLanguage') || 'ko'].toastCreateLink);
                 } else {
                     showToast(data.message, 'danger');
@@ -439,18 +439,18 @@
             });
         }
 
-        function displayIframeCode(link) {
-            const iframeContainer = document.getElementById('iframe-container');
-            const iframeCode = `<iframe src="${link}" width="600" height="800"></iframe>`;
-            document.getElementById('iframe-code').value = iframeCode;
-            iframeContainer.style.display = 'block';
+        function displayEmbedCode(link) {
+            const embedContainer = document.getElementById('embed-container');
+            const embedCode = `<embed src="${link}" width="600" height="800">`;
+            document.getElementById('embed-code').value = embedCode;
+            embedContainer.style.display = 'block';
 
-            document.getElementById('copy-iframe-btn').addEventListener('click', function() {
-                navigator.clipboard.writeText(iframeCode).then(() => {
+            document.getElementById('copy-embed-btn').addEventListener('click', function() {
+                navigator.clipboard.writeText(embedCode).then(() => {
                     showToast(translations[localStorage.getItem('selectedLanguage') || 'ko'].toastCopyText);
                 }).catch(err => {
                     console.error('Failed to copy: ', err);
-                    showToast('Failed to copy iframe code.', 'danger');
+                    showToast('Failed to copy embed code.', 'danger');
                 });
             });
         }
