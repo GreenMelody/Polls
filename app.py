@@ -10,9 +10,13 @@ from pytz import timezone
 import json
 import re
 from apscheduler.schedulers.background import BackgroundScheduler
+from dotenv import load_dotenv
 
 app = Flask(__name__)
-app.secret_key = 'your_secret_key'
+dotenv_path = os.path.abspath(os.path.join('sharedworkspace/','.env'))
+load_dotenv(dotenv_path)
+app.secret_key = os.getenv('SECRET_KEY')
+app_db_path = os.path.abspath(os.path.join(os.getenv('DB_PATH')))
 
 # Logging 설정
 def setup_logging():
@@ -47,7 +51,7 @@ def generate_poll_id():
     return str(uuid.uuid4())
 
 def update_visitor_count():
-    conn = sqlite3.connect('app_data.db')
+    conn = sqlite3.connect(app_db_path)
     cursor = conn.cursor()
     today = date.today().isoformat()
 
@@ -115,7 +119,7 @@ def create_poll():
 
     options_json = json.dumps(valid_options)
 
-    conn = sqlite3.connect('app_data.db')
+    conn = sqlite3.connect(app_db_path)
     cursor = conn.cursor()
     cursor.execute('''
         INSERT INTO polls (id, title, options, password, end_date, created_at)
@@ -134,7 +138,7 @@ def create_poll():
 
 @app.route('/poll/<poll_id>', methods=['GET', 'POST'])
 def view_poll(poll_id):
-    conn = sqlite3.connect('app_data.db')
+    conn = sqlite3.connect(app_db_path)
     cursor = conn.cursor()
     
     if request.method == 'GET':
@@ -157,7 +161,7 @@ def view_poll(poll_id):
     if request.method == 'POST':
         user_id = request.form.get('user_id')
         option_index = int(request.form.get('option'))
-        conn = sqlite3.connect('app_data.db')
+        conn = sqlite3.connect(app_db_path)
         cursor = conn.cursor()
         cursor.execute('SELECT * FROM votes WHERE user_id = ? AND poll_id = ?', (user_id, poll_id))
         vote_exists = cursor.fetchone()
@@ -186,7 +190,7 @@ def view_poll(poll_id):
 
 @app.route('/preview/<poll_id>', methods=['GET'])
 def preview_poll(poll_id):
-    conn = sqlite3.connect('app_data.db')
+    conn = sqlite3.connect(app_db_path)
     cursor = conn.cursor()
     cursor.execute('SELECT options FROM polls WHERE id = ?', (poll_id,))
     poll = cursor.fetchone()
@@ -197,7 +201,7 @@ def preview_poll(poll_id):
 
     options = json.loads(poll[0])
 
-    conn = sqlite3.connect('app_data.db')
+    conn = sqlite3.connect(app_db_path)
     cursor = conn.cursor()
     cursor.execute('''
         SELECT option_index, COUNT(*) as vote_count
@@ -222,7 +226,7 @@ def delete_poll(poll_id):
     if not password or len(password) != 6 or not password.isdigit():
         return jsonify({'success': False, 'message': 'Invalid password format.'})
 
-    conn = sqlite3.connect('app_data.db')
+    conn = sqlite3.connect(app_db_path)
     cursor = conn.cursor()
     cursor.execute('SELECT password FROM polls WHERE id = ?', (poll_id,))
     poll = cursor.fetchone()
@@ -241,7 +245,7 @@ def delete_poll(poll_id):
     conn.commit()
     conn.close()
 
-    conn = sqlite3.connect('app_data.db')
+    conn = sqlite3.connect(app_db_path)
     cursor = conn.cursor()
     cursor.execute('DELETE FROM votes WHERE poll_id = ?', (poll_id,))
     conn.commit()
@@ -263,7 +267,7 @@ def filter_polls():
     start_date_with_time = f"{start_date} 00:00:00"
     end_date_with_time = f"{end_date} 23:59:59"
 
-    conn = sqlite3.connect('app_data.db')
+    conn = sqlite3.connect(app_db_path)
     cursor = conn.cursor()
     cursor.execute('''
         SELECT id, title, created_at, end_date, visit_count 
@@ -291,7 +295,7 @@ def filter_polls():
 
 # 매일 새벽 3시에 만료된 투표와 관련된 데이터 삭제
 def delete_expired_polls():
-    conn = sqlite3.connect('app_data.db')
+    conn = sqlite3.connect(app_db_path)
     cursor = conn.cursor()
 
     threshold_date = (datetime.now() - timedelta(days=15)).isoformat()
