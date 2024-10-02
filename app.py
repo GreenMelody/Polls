@@ -208,7 +208,9 @@ def preview_poll(poll_id):
     vote_results = cursor.fetchall()
     conn.close()
 
-    results = [{'option_index': i, 'option_text': escape(options[i]), 'vote_count': vote[1]} for i, vote in enumerate(vote_results)]
+    results = [{'option_index': i, 'option_text': options[i], 'vote_count': 0} for i in range(len(options))]
+    for vote in vote_results:
+        results[vote[0]]['vote_count'] = vote[1]
 
     return jsonify(results)
 
