@@ -11,6 +11,7 @@ import json
 import re
 from apscheduler.schedulers.background import BackgroundScheduler
 from dotenv import load_dotenv
+import atexit
 
 app = Flask(__name__)
 dotenv_path = os.path.abspath(os.path.join('sharedworkspace/','.env'))
@@ -315,25 +316,29 @@ def delete_expired_polls():
 
 # 스케줄러 설정
 scheduler = BackgroundScheduler(timezone="Asia/Seoul")
-scheduler.add_job(func=delete_expired_polls, trigger='cron', hour=3, minute=0)
-scheduler.start()
+# scheduler.add_job(func=delete_expired_polls, trigger='cron', hour=3, minute=0)
+# scheduler.start()
 
 @app.route('/scheduler/jobs', methods=['GET'])
 def get_scheduled_jobs():
-    jobs = scheduler.get_jobs()
     jobs_info = []
-    for job in jobs:
+    try:
+        jobs = scheduler.get_jobs()
+        for job in jobs:
+            jobs_info.append({
+                'id': job.id,
+                'next_run_time': str(job.next_run_time),
+                'trigger': str(job.trigger)
+            })
+        app.logger.info("Fetched scheduler jobs.")
+    except Exception as e:
         jobs_info.append({
-            'id': job.id,
-            'next_run_time': str(job.next_run_time),
-            'trigger': str(job.trigger)
-        })
-    app.logger.info("Fetched scheduler jobs.")
+                'Exception Error': str(e)
+            })
     return jsonify(jobs_info)
 
 @app.before_first_request
 def initialize_scheduler():
-    import atexit
     atexit.register(lambda: scheduler.shutdown())
 
 if __name__ == '__main__':
