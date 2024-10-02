@@ -141,7 +141,7 @@ def create_poll():
 def view_poll(poll_id):
     conn = sqlite3.connect(app_db_path)
     cursor = conn.cursor()
-    
+
     if request.method == 'GET':
         cursor.execute('UPDATE polls SET visit_count = visit_count + 1 WHERE id = ?', (poll_id,))
     
@@ -159,24 +159,32 @@ def view_poll(poll_id):
     formatted_start_time = datetime.fromisoformat(created_at).strftime('%Y-%m-%d %H:%M:%S')
     formatted_end_time = datetime.fromisoformat(end_date).strftime('%Y-%m-%d %H:%M:%S')
 
+    # 투표 종료 여부를 확인하는 변수
+    current_time = datetime.now()
+    is_expired = current_time > datetime.fromisoformat(end_date)
+
     if request.method == 'POST':
+        if is_expired:
+            # 투표가 종료된 경우
+            app.logger.warning(f"Attempted to vote on an expired poll. Poll ID: {poll_id}")
+            return jsonify({'success': False, 'reason': 'expired', 'message': 'This poll has already expired.'})
+
         user_id = request.form.get('user_id')
         option_index = int(request.form.get('option'))
+
         conn = sqlite3.connect(app_db_path)
         cursor = conn.cursor()
         cursor.execute('SELECT * FROM votes WHERE user_id = ? AND poll_id = ?', (user_id, poll_id))
         vote_exists = cursor.fetchone()
         if vote_exists:
             conn.close()
-            return jsonify({'success': False, 'message': 'You have already voted.'})
+            return jsonify({'success': False, 'reason': 'already_voted', 'message': 'You have already voted.'})
         else:
             cursor.execute('INSERT INTO votes (user_id, poll_id, option_index) VALUES (?, ?, ?)', (user_id, poll_id, option_index))
             conn.commit()
             conn.close()
+            app.logger.info(f"Vote recorded successfully. Poll ID: {poll_id}, User ID: {user_id}, Option: {option_index}")
             return jsonify({'success': True, 'message': 'Vote recorded successfully!'})
-
-    current_time = datetime.now()
-    is_expired = current_time > datetime.fromisoformat(end_date)
 
     return render_template(
         'poll.html',

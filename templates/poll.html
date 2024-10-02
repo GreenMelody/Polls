@@ -270,6 +270,7 @@
                 toastDeleteFailed: "Failed to delete poll.",
                 toastVoteSuccess: "Vote recorded successfully!",
                 toastVoteFailed: "You have already voted.",
+                toastVoteFailedExpired: "This poll has already expired.",
                 toast6DigitPassword: "Please enter a 6-digit password.",
                 toastRetryLimit: "You have exceeded the password attempt limit. Please try again later.",
                 toastErrorOccurred: "An error occurred.",
@@ -292,6 +293,7 @@
                 toastDeleteFailed: "투표 삭제에 실패했습니다.",
                 toastVoteSuccess: "투표가 기록되었습니다!",
                 toastVoteFailed: "이미 투표하셨습니다.",
+                toastVoteFailedExpired: "이 투표는 종료되었습니다.",
                 toast6DigitPassword: "6자리 비밀번호를 입력하세요.",
                 toastRetryLimit: "비밀번호를 3회 이상 틀렸습니다. 잠시 후, 다시 시도해 주세요.",
                 toastErrorOccurred: "오류가 발생했습니다.",
@@ -368,8 +370,10 @@
                             const lang = localStorage.getItem('selectedLanguage') || 'ko';
                             if (data.success) {
                                 showToast(translations[lang].toastVoteSuccess, 'success');
-                            } else {
+                            } else if (data.reason === 'already_voted') {
                                 showToast(translations[lang].toastVoteFailed, 'danger');
+                            } else if (data.reason === 'expired') {
+                                showToast(translations[lang].toastVoteFailedExpired, 'danger');
                             }
                         })
                         .catch(error => {
