@@ -26,30 +26,6 @@ app_db_file = os.getenv('DB_FILE')
 
 app_db_file_path = os.path.join(app_db_path, app_db_file)
 
-# Logging 설정
-def setup_logging():
-    if not os.path.exists('logs'):
-        os.makedirs('logs')
-
-    # 로그 포맷 지정
-    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-
-    # 콘솔 핸들러 설정
-    console_handler = logging.StreamHandler()
-    console_handler.setFormatter(formatter)
-    
-    # 파일 핸들러 설정 (날짜별로 로그를 저장)
-    file_handler = TimedRotatingFileHandler('logs/app.log', when="midnight", interval=1, backupCount=60, encoding="utf-8")
-    file_handler.setFormatter(formatter)
-    file_handler.suffix = "%Y-%m-%d"
-
-    # Logger 설정
-    app.logger.setLevel(logging.DEBUG)
-    app.logger.addHandler(console_handler)
-    app.logger.addHandler(file_handler)
-
-setup_logging()
-
 # Utility function to hash passwords
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
@@ -151,58 +127,60 @@ def view_poll(poll_id):
 
     if request.method == 'GET':
         cursor.execute('UPDATE polls SET visit_count = visit_count + 1 WHERE id = ?', (poll_id,))
-    
-    cursor.execute('SELECT title, options, end_date, created_at, visit_count FROM polls WHERE id = ?', (poll_id,))
-    poll = cursor.fetchone()
-    conn.commit()
-    conn.close()
+        cursor.execute('SELECT title, options, end_date, created_at, visit_count FROM polls WHERE id = ?', (poll_id,))
+        poll = cursor.fetchone()
+        conn.commit()
+        conn.close()
 
-    if not poll:
-        return render_template('error.html')
+        if not poll:
+            return render_template('error.html')
 
-    title, options_str, end_date, created_at, poll_visit_count = poll
-    options = json.loads(options_str)
+        title, options_str, end_date, created_at, poll_visit_count = poll
+        options = json.loads(options_str)
+        formatted_start_time = datetime.fromisoformat(created_at).strftime('%Y-%m-%d %H:%M:%S')
+        formatted_end_time = datetime.fromisoformat(end_date).strftime('%Y-%m-%d %H:%M:%S')
+        current_time = datetime.now()
+        is_expired = current_time > datetime.fromisoformat(end_date)
 
-    formatted_start_time = datetime.fromisoformat(created_at).strftime('%Y-%m-%d %H:%M:%S')
-    formatted_end_time = datetime.fromisoformat(end_date).strftime('%Y-%m-%d %H:%M:%S')
+        return render_template(
+            'poll.html',
+            title=escape(title),
+            options=[escape(option) for option in options],
+            poll_id=escape(poll_id),
+            is_expired=is_expired,
+            start_time=formatted_start_time,
+            end_time=formatted_end_time,
+            poll_visit_count=poll_visit_count
+        )
 
-    # 투표 종료 여부를 확인하는 변수
-    current_time = datetime.now()
-    is_expired = current_time > datetime.fromisoformat(end_date)
-
-    if request.method == 'POST':
-        if is_expired:
-            # 투표가 종료된 경우
-            app.logger.warning(f"Attempted to vote on an expired poll. Poll ID: {poll_id}")
-            return jsonify({'success': False, 'reason': 'expired', 'message': 'This poll has already expired.'})
-
+    elif request.method == 'POST':
         user_id = request.form.get('user_id')
         option_index = int(request.form.get('option'))
+        
+        # 만료된 투표에 대한 처리
+        cursor.execute('SELECT end_date FROM polls WHERE id = ?', (poll_id,))
+        end_date = cursor.fetchone()[0]
+        is_expired = datetime.now() > datetime.fromisoformat(end_date)
+        
+        if is_expired:
+            return jsonify({'success': False, 'reason': 'expired', 'message': 'This poll has already expired.'})
 
-        conn = sqlite3.connect(app_db_file_path)
-        cursor = conn.cursor()
+        # 투표를 갱신하도록 수정
         cursor.execute('SELECT * FROM votes WHERE user_id = ? AND poll_id = ?', (user_id, poll_id))
         vote_exists = cursor.fetchone()
+        
         if vote_exists:
-            conn.close()
-            return jsonify({'success': False, 'reason': 'already_voted', 'message': 'You have already voted.'})
+            # 이미 투표한 경우, 기존 투표를 업데이트
+            cursor.execute('UPDATE votes SET option_index = ? WHERE user_id = ? AND poll_id = ?', (option_index, user_id, poll_id))
         else:
+            # 투표가 없으면 새로 추가
             cursor.execute('INSERT INTO votes (user_id, poll_id, option_index) VALUES (?, ?, ?)', (user_id, poll_id, option_index))
-            conn.commit()
-            conn.close()
-            app.logger.info(f"Vote recorded successfully. Poll ID: {poll_id}, User ID: {user_id}, Option: {option_index}")
-            return jsonify({'success': True, 'message': 'Vote recorded successfully!'})
+        
+        conn.commit()
+        conn.close()
 
-    return render_template(
-        'poll.html',
-        title=escape(title),
-        options=[escape(option) for option in options],
-        poll_id=escape(poll_id),
-        is_expired=is_expired,
-        start_time=formatted_start_time,
-        end_time=formatted_end_time,
-        poll_visit_count=poll_visit_count
-    )
+        app.logger.info(f"Vote recorded successfully. Poll ID: {poll_id}, User ID: {user_id}, Option: {option_index}")
+        return jsonify({'success': True, 'message': 'Vote recorded successfully!'})
 
 @app.route('/poll/<poll_id>/user_vote', methods=['GET'])
 def get_user_vote(poll_id):
