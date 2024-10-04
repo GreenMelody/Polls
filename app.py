@@ -350,7 +350,9 @@ def get_scheduled_jobs():
 
 @app.before_first_request
 def initialize_scheduler():
-    atexit.register(lambda: scheduler.shutdown())
+    if not scheduler.running:
+        scheduler.start()
+    atexit.register(lambda: scheduler.shutdown() if scheduler.running else None)
 
 if __name__ == '__main__':
     app.run(debug=True)
