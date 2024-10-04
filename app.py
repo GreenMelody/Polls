@@ -1,6 +1,4 @@
 import os
-import logging
-from logging.handlers import TimedRotatingFileHandler
 from flask import Flask, request, render_template, url_for, jsonify, escape
 import sqlite3
 import hashlib
@@ -12,7 +10,6 @@ import re
 from apscheduler.schedulers.background import BackgroundScheduler
 from dotenv import load_dotenv
 import atexit
-import subprocess
 
 app = Flask(__name__)
 
