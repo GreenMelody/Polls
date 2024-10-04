@@ -204,6 +204,24 @@ def view_poll(poll_id):
         poll_visit_count=poll_visit_count
     )
 
+@app.route('/poll/<poll_id>/user_vote', methods=['GET'])
+def get_user_vote(poll_id):
+    user_id = request.args.get('user_id')
+    
+    if not user_id:
+        return jsonify({'error': 'User ID not provided'}), 400
+
+    conn = sqlite3.connect(app_db_file_path)
+    cursor = conn.cursor()
+    
+    cursor.execute('SELECT option_index FROM votes WHERE user_id = ? AND poll_id = ?', (user_id, poll_id))
+    user_vote = cursor.fetchone()
+    conn.close()
+    
+    user_vote = user_vote[0] if user_vote else None
+
+    return jsonify({'user_vote': user_vote})
+
 @app.route('/preview/<poll_id>', methods=['GET'])
 def preview_poll(poll_id):
     conn = sqlite3.connect(app_db_file_path)
