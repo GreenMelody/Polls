@@ -1,9 +1,17 @@
-# setup_db.py
+import os
 import sqlite3
+from dotenv import load_dotenv
 
 def setup_database():
     # Set up the database
-    conn = sqlite3.connect('app_data.db')
+    print(f"setup_db.py execution")
+    dotenv_path = os.path.abspath(os.path.join('sharedworkspace/','.env'))
+    load_dotenv(dotenv_path)
+    app_db_path = os.getenv('DB_PATH')
+    app_db_file = os.getenv('DB_FILE')
+    app_db_file_path = os.path.join(app_db_path, app_db_file)
+
+    conn = sqlite3.connect(app_db_file_path)
     cursor = conn.cursor()
 
     # Polls table
